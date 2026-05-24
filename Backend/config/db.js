@@ -13,7 +13,10 @@ const pool = mysql.createPool({
 });
 
 pool.getConnection()
-  .then(() => console.log("MySQL Connection Established"))
+  .then((connection) => {
+    console.log("MySQL Connection Established");
+    connection.release();
+  })
   .catch((err) => {
     console.error("MySQL Connection Error:", err);
     process.exit(1);
