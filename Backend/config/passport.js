@@ -9,7 +9,7 @@ passport.use(
   new GoogleStrategy(
     {
       clientID: GOOGLE_CLIENT_ID,
-      clientSecret: GOOGLE_CLIENT_SECRET,
+      clientSecret: GoogleClient_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -19,6 +19,7 @@ passport.use(
 
         const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
         let user;
+        
         if (existing.length > 0) {
           user = existing[0];
         } else {
@@ -28,23 +29,10 @@ passport.use(
           );
           user = { id: result.insertId, name, email };
         }
-        done(null, user);
+        return done(null, user);
       } catch (err) {
-        done(err, null);
+        return done(err, null);
       }
     }
   )
 );
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const [users] = await db.execute("SELECT * FROM users WHERE id = ?", [id]);
-    done(null, users[0]);
-  } catch (err) {
-    done(err, null);
-  }
-});
