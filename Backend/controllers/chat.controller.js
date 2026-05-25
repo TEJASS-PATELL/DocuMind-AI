@@ -2,7 +2,6 @@ const { PineconeStore } = require("@langchain/pinecone");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
 const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
-const path = require("path");
 const { getPineconeIndex } = require("../config/pinecone");
 
 let GoogleGenerativeAIEmbeddings = null;
@@ -18,15 +17,15 @@ const initLangchainModules = async () => {
   return {
     embeddings: new GoogleGenerativeAIEmbeddings({
       apiKey: process.env.GEMINI_API_KEY,
-      modelName: "text-embedding-004",
+      modelName: "embedding-001",
     }),
     ChatGoogleGenerativeAI,
   };
 };
 
 const parsePdf = async (buffer) => {
-  const pdfParse = await import("pdf-parse/lib/pdf-parse.js");
-  return pdfParse.default(buffer);
+  const pdfParse = require("pdf-parse");
+  return pdfParse(buffer);
 };
 
 exports.uploadDocument = async (req, res) => {
