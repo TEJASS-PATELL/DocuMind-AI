@@ -1,197 +1,175 @@
-const { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
-const db = require("../config/db");
-const { generateSystemPrompt, yogaPrompt } = require("../Prompt/BrainBody");
-const NodeCache = require("node-cache");
-const taskCache = new NodeCache({ stdTTL: 86400 });
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const { PineconeStore } = require("@langchain/pinecone");
+const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
+const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
+const fs = require("fs");
+const pdfParse = require("pdf-parse");
+const { getPineconeIndex } = require("../config/pinecone");
 
-const withRetry = async (fn, retries = 3, delay = 1000) => {
+let GoogleGenAIEmbeddings = null;
+let ChatGoogleGenAI = null;
+
+const initLangchainModules = async () => {
+  if (!GoogleGenAIEmbeddings || !ChatGoogleGenAI) {
+    const googleGenAIMod = await import("@langchain/google-genai");
+    GoogleGenAIEmbeddings = googleGenAIMod.GoogleGenAIEmbeddings;
+    ChatGoogleGenAI = googleGenAIMod.ChatGoogleGenAI;
+  }
+  
+  return {
+    embeddings: new GoogleGenAIEmbeddings({
+      apiKey: process.env.GEMINI_API_KEY,
+      modelName: "text-embedding-004", 
+    }),
+    ChatGoogleGenAI
+  };
+};
+
+exports.uploadDocument = async (req, res) => {
+  const pineconeIndex = getPineconeIndex();
   try {
-    return await fn();
-  } catch (error) {
-    if (retries > 0 && error.status === 503) {
-      await new Promise(res => setTimeout(res, delay));
-      return withRetry(fn, retries - 1, delay * 2);
+    const userId = req.user?.userid;
+    const { sessionId } = req.body;
+
+    if (!userId) return res.status(401).json({ msg: "User not authenticated" });
+    if (!sessionId) return res.status(400).json({ msg: "Missing sessionId" });
+    if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
+
+    const { embeddings } = await initLangchainModules();
+
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const pdfData = await pdfParse(fileBuffer);
+    const extractedText = pdfData.text;
+
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1000,
+      chunkOverlap: 200,
+    });
+    const chunks = await splitter.splitText(extractedText);
+
+    const docs = chunks.map((chunk) => ({
+      pageContent: chunk,
+      metadata: {
+        sessionId,
+        userId,
+        source: req.file.originalname
+      },
+    }));
+
+    await PineconeStore.fromDocuments(docs, embeddings, {
+      pineconeIndex,
+      maxConcurrency: 5,
+    });
+
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
     }
-    throw error;
+
+    return res.status(200).json({
+      msg: "PDF embeddings saved successfully in Pinecone"
+    });
+
+  } catch (error) {
+    console.error("Error in uploadDocument:", error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    return res.status(500).json({
+      msg: "Pinecone ingestion failed",
+      error: error.message
+    });
   }
 };
 
-exports.sendAndSaveChat = async (req, res) => {
+exports.askQuestion = async (req, res) => {
+  const pineconeIndex = getPineconeIndex();
   try {
     const userId = req.user?.userid;
-    const { sessionId, message, language = "english", level = "beginner", yogaMode, replyType = "Short 50 to 100 words" } = req.body;
+    const {
+      sessionId,
+      message,
+      language = "english",
+      focusMode,
+      replyType = "Concise"
+    } = req.body;
 
     if (!userId) return res.status(401).json({ msg: "User not authenticated" });
-    if (!sessionId || !message) return res.status(400).json({ msg: "Missing required fields: sessionId or message" });
+    if (!sessionId || !message) return res.status(400).json({ msg: "Missing sessionId or message" });
 
-    const [oldMessages] = await db.query(
-      "SELECT sender, message FROM chat_history WHERE user_id = ? AND session_id = ? ORDER BY id DESC LIMIT 10",
-      [userId, sessionId]
-    );
+    // Ensure modules are loaded
+    const { embeddings, ChatGoogleGenAI } = await initLangchainModules();
 
-    const limitedMessages = oldMessages.reverse();
+    const vectorStore = await PineconeStore.fromExistingIndex(embeddings, { pineconeIndex });
 
-    const chatHistory = limitedMessages.map(msg => ({
-      role: msg.sender === "model" ? "model" : "user",
-      parts: [{ text: msg.message }],
-    }));
+    const retriever = vectorStore.asRetriever({
+      k: 4,
+      filter: { sessionId: { $eq: sessionId } } 
+    });
 
-    const systemInstruction = yogaMode ? yogaPrompt(language, level, replyType) : generateSystemPrompt(language, level, replyType);
+    const relevantDocs = await retriever.invoke(message);
 
-    const contents = [...chatHistory, { role: "user", parts: [{ text: message }]}];
+    const contextText = relevantDocs
+      .map((d) => d.pageContent)
+      .join("\n\n");
 
-    const tokenMap = (replyType) => {
-      if (replyType.toLowerCase().includes("short")) return 900;
-      if (replyType.toLowerCase().includes("balanced")) return 1400;
-      if (replyType.toLowerCase().includes("detailed")) return 2500;
+    let baseSystemInstruction = focusMode
+      ? "You are in Focus Mode. Be extra sharp, analytical, and precise."
+      : "You are an expert document assistant.";
+
+    baseSystemInstruction += `\nRespond in language: ${language},\nand format response style as: ${replyType}.`;
+
+    const systemInstruction = `
+${baseSystemInstruction}
+
+CRITICAL INSTRUCTION:
+Answer the user's question based strictly on the Context provided below.
+
+If the context doesn't contain the answer, politely say:
+"Bro, uploaded document me ye information nahi mili."
+
+Do NOT use external knowledge fallback strings.
+
+--- DOCUMENT CONTEXT START ---
+${contextText || "No matching context found for this session."}
+--- DOCUMENT CONTEXT END ---
+`;
+
+    const model = new ChatGoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      modelName: "gemini-2.5-flash",
+      temperature: 0.1,
+      safetySettings: [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE }
+      ]
+    });
+
+    const tokenMap = (type) => {
+      const normalized = type.toLowerCase();
+      if (normalized.includes("short")) return 900;
+      if (normalized.includes("balanced")) return 1400;
+      if (normalized.includes("detailed")) return 2500;
       return 1800;
     };
 
-    const result = await withRetry(() =>
-      model.generateContent({
-        contents,
-        systemInstruction,
-        generationConfig: {
-          maxOutputTokens: tokenMap(replyType)
-        },
-        safetySettings: [
-          { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-          { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-        ]
-      })
+    const result = await model.invoke(
+      [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: message }
+      ],
+      { maxOutputTokens: tokenMap(replyType) }
     );
 
-    const reply = result.response?.text() || "Sorry, I couldn't generate a response.";
+    return res.json({
+      reply: result.content
+    });
 
-    await db.query("START TRANSACTION");
-    await db.query(
-      "INSERT INTO chat_history (user_id, session_id, sender, message) VALUES (?, ?, ?, ?)",
-      [userId, sessionId, "user", message]
-    );
-    await db.query(
-      "INSERT INTO chat_history (user_id, session_id, sender, message) VALUES (?, ?, ?, ?)",
-      [userId, sessionId, "model", reply]
-    );
-    await db.query("COMMIT");
-
-    res.json({ reply });
   } catch (error) {
-    console.error("500 Internal Server Error in sendAndSaveChat:", error);
-    res.status(500).json({ reply: `Sorry, I can't assist right now.`, error: error.message});
+    console.error("Error in askQuestion RAG:", error);
+    return res.status(500).json({
+      reply: "Sorry, vector DB query failed.",
+      error: error.message
+    });
   }
 };
-
-exports.generateDailytask = async (req, res) => {
-  const cacheKey = "daily_tasks";
-  const cached = taskCache.get(cacheKey);
-
-  if (cached) {
-    return res.json({ tasks: cached });
-  }
-
-  const defaultTasks = [
-    "Take 10 deep breaths to energize your mind",
-    "Name 5 things you're grateful for",
-    "Stretch arms overhead",
-    "Speak a positive affirmation aloud 3 times",
-    "Focus on 3 surrounding sounds",
-    "Balance a book on your head for posture"
-  ];
-
-  try {
-    const prompt = `
-      You are a creative wellness coach AI.
-      Create 6-7 short daily challenges for mind and body.
-      Each task should be a double line.
-      Respond with JSON array of strings.
-    `;
-
-    const result = await withRetry(() =>
-      model.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-      })
-    );
-
-    let tasks;
-
-    try {
-      tasks = JSON.parse(result.response.text());
-      if (!Array.isArray(tasks)) tasks = defaultTasks;
-    } catch {
-      tasks = defaultTasks;
-    }
-
-    tasks = tasks.slice(0, 7);
-    taskCache.set(cacheKey, tasks);
-
-    res.json({ tasks });
-
-  } catch (err) {
-    console.error("Error generating daily tasks:", err);
-    taskCache.set(cacheKey, defaultTasks);
-    res.json({ tasks: defaultTasks });
-  }
-};
-
-exports.getChatSessions = async (req, res) => {
-  const userId = req.user.userid;
-  if (!userId) return res.status(401).json({ msg: "User not authenticated" });
-
-  try {
-    const [results] = await db.query(
-      `SELECT DISTINCT session_id, MIN(timestamp) AS started_at
-       FROM chat_history
-       WHERE user_id = ?
-       GROUP BY session_id
-       ORDER BY started_at DESC`,
-      [userId]
-    );
-    res.json({ history: results });
-  } catch (err) {
-    res.status(500).json({ msg: "Error getting sessions", err });
-  }
-};
-
-exports.getChatBySession = async (req, res) => {
-  const { sessionId } = req.params;
-  const userId = req.user.userid;
-  if (!userId) return res.status(401).json({ msg: "User not authenticated" });
-
-  try {
-    const [results] = await db.query(
-      `SELECT sender, message, timestamp
-       FROM chat_history
-       WHERE user_id = ? AND session_id = ?
-       ORDER BY timestamp ASC`,
-      [userId, sessionId]
-    );
-    const formatted = results.map(row => ({ role: row.sender, text: row.message }));
-    res.json({ messages: formatted });
-  } catch (err) {
-    res.status(500).json({ msg: "Error getting chat", err });
-  }
-};
-
-exports.deleteChatSession = async (req, res) => {
-  const userId = req.user.userid;
-  const { sessionId } = req.params;
-  if (!userId) return res.status(401).json({ msg: "User not authenticated" });
-  if (!sessionId) return res.status(400).json({ msg: "Session ID is required" });
-
-  try {
-    await db.query(
-      "DELETE FROM chat_history WHERE user_id = ? AND session_id = ?",
-      [userId, sessionId]
-    );
-    res.json({ msg: "Chat session deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ msg: "Failed to delete chat session", err });
-  }
-};
-
-
-
