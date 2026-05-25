@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmetConfig = require("./middleware/helmet");
 const chatRoutes = require("./routers/chatRoutes");
 const authRoutes = require("./routers/authroutes");
+const session = require('express-session');
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
@@ -12,6 +13,7 @@ const app = express();
 require("./models/user");
 
 app.use(express.json());
+app.set('trust proxy', 1);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(helmetConfig);
@@ -23,6 +25,15 @@ app.use(
   })
 );
 
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true, 
+  cookie: {
+    secure: process.env.NODE_ENV === "production", 
+    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax'
+  }
+}));
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 
