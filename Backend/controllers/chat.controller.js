@@ -1,29 +1,42 @@
 const { PineconeStore } = require("@langchain/pinecone");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
-const { HarmBlockThreshold, HarmCategory, GoogleGenerativeAI } = require("@google/generative-ai");
+const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-// Custom Embeddings class using @google/generative-ai directly (bypasses langchain wrapper issues)
+// Direct v1 API call — bypasses langchain wrapper and v1beta issue completely
 class GeminiEmbeddings {
   constructor() {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    this.apiKey = process.env.GEMINI_API_KEY;
+    this.model = "text-embedding-004";
+  }
+
+  async embedContent(text) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${this.model}:embedContent?key=${this.apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: `models/${this.model}`,
+          content: { parts: [{ text }] },
+        }),
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Embedding API call failed");
+    }
+    return data.embedding.values;
   }
 
   async embedDocuments(texts) {
-    const results = await Promise.all(
-      texts.map(async (text) => {
-        const result = await this.model.embedContent(text);
-        return result.embedding.values;
-      })
-    );
+    const results = await Promise.all(texts.map((t) => this.embedContent(t)));
     return results;
   }
 
   async embedQuery(text) {
-    const result = await this.model.embedContent(text);
-    return result.embedding.values;
+    return this.embedContent(text);
   }
 }
 
@@ -39,7 +52,12 @@ const initChatModel = async () => {
 
 const parsePdf = async (buffer) => {
   const pdfParseModule = require("pdf-parse");
-  const pdfParse = pdfParseModule.default || pdfParseModule;
+  const pdfParse = typeof pdfParseModule === "function"
+    ? pdfParseModule
+    : pdfParseModule.default;
+  if (typeof pdfParse !== "function") {
+    throw new Error("pdf-parse module could not be loaded as a function");
+  }
   return pdfParse(buffer);
 };
 
