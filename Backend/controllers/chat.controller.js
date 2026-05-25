@@ -1,30 +1,45 @@
 const { PineconeStore } = require("@langchain/pinecone");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
-const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
+const { HarmBlockThreshold, HarmCategory, GoogleGenerativeAI } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-let GoogleGenerativeAIEmbeddings = null;
-let ChatGoogleGenerativeAI = null;
-
-const initLangchainModules = async () => {
-  if (!GoogleGenerativeAIEmbeddings || !ChatGoogleGenerativeAI) {
-    const googleGenAIMod = await import("@langchain/google-genai");
-    GoogleGenerativeAIEmbeddings = googleGenAIMod.GoogleGenerativeAIEmbeddings;
-    ChatGoogleGenerativeAI = googleGenAIMod.ChatGoogleGenerativeAI;
+// Custom Embeddings class using @google/generative-ai directly (bypasses langchain wrapper issues)
+class GeminiEmbeddings {
+  constructor() {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    this.model = genAI.getGenerativeModel({ model: "text-embedding-004" });
   }
 
-  return {
-    embeddings: new GoogleGenerativeAIEmbeddings({
-      apiKey: process.env.GEMINI_API_KEY,
-      modelName: "embedding-001",
-    }),
-    ChatGoogleGenerativeAI,
-  };
+  async embedDocuments(texts) {
+    const results = await Promise.all(
+      texts.map(async (text) => {
+        const result = await this.model.embedContent(text);
+        return result.embedding.values;
+      })
+    );
+    return results;
+  }
+
+  async embedQuery(text) {
+    const result = await this.model.embedContent(text);
+    return result.embedding.values;
+  }
+}
+
+let ChatGoogleGenerativeAI = null;
+
+const initChatModel = async () => {
+  if (!ChatGoogleGenerativeAI) {
+    const mod = await import("@langchain/google-genai");
+    ChatGoogleGenerativeAI = mod.ChatGoogleGenerativeAI;
+  }
+  return ChatGoogleGenerativeAI;
 };
 
 const parsePdf = async (buffer) => {
-  const pdfParse = require("pdf-parse");
+  const pdfParseModule = require("pdf-parse");
+  const pdfParse = pdfParseModule.default || pdfParseModule;
   return pdfParse(buffer);
 };
 
@@ -38,7 +53,7 @@ exports.uploadDocument = async (req, res) => {
     if (!sessionId) return res.status(400).json({ msg: "Missing sessionId" });
     if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
 
-    const { embeddings } = await initLangchainModules();
+    const embeddings = new GeminiEmbeddings();
 
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
@@ -104,7 +119,8 @@ exports.askQuestion = async (req, res) => {
     if (!sessionId || !message)
       return res.status(400).json({ msg: "Missing sessionId or message" });
 
-    const { embeddings, ChatGoogleGenerativeAI } = await initLangchainModules();
+    const embeddings = new GeminiEmbeddings();
+    const ChatModel = await initChatModel();
 
     const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
       pineconeIndex,
@@ -112,9 +128,7 @@ exports.askQuestion = async (req, res) => {
     });
 
     const retriever = vectorStore.asRetriever({ k: 4 });
-
     const relevantDocs = await retriever.invoke(message);
-
     const contextText = relevantDocs.map((d) => d.pageContent).join("\n\n");
 
     let baseSystemInstruction = focusMode
@@ -132,8 +146,6 @@ Answer the user's question based strictly on the Context provided below.
 If the context doesn't contain the answer, politely say:
 "Bro, uploaded document me ye information nahi mili."
 
-Do NOT use external knowledge fallback strings.
-
 --- DOCUMENT CONTEXT START ---
 ${contextText || "No matching context found for this session."}
 --- DOCUMENT CONTEXT END ---
@@ -147,28 +159,16 @@ ${contextText || "No matching context found for this session."}
       return 1800;
     };
 
-    const model = new ChatGoogleGenerativeAI({
+    const model = new ChatModel({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "gemini-2.5-flash",
       temperature: 0.1,
       maxOutputTokens: tokenMap(replyType),
       safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
       ],
     });
 
@@ -177,9 +177,7 @@ ${contextText || "No matching context found for this session."}
       { role: "user", content: message },
     ]);
 
-    return res.json({
-      reply: result.content,
-    });
+    return res.json({ reply: result.content });
   } catch (error) {
     console.error("Error in askQuestion RAG:", error);
     return res.status(500).json({
