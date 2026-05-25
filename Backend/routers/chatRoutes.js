@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 const chatController = require("../controllers/chat.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 
-router.post("/startChat", authMiddleware, chatController.sendAndSaveChat);
-router.get("/daily-tasks", chatController.generateDailytask);
-router.get("/history", authMiddleware, chatController.getChatSessions);
-router.get("/:sessionId", authMiddleware, chatController.getChatBySession);
-router.delete("/:sessionId", authMiddleware, chatController.deleteChatSession);
+const upload = multer({ dest: "uploads/" });
 
+router.post("/startChat", authMiddleware, chatController.askQuestion);
+router.post("/upload", authMiddleware, upload.single("file"), chatController.uploadDocument);
 
 module.exports = router;
