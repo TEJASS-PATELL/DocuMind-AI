@@ -5,22 +5,22 @@ const fs = require("fs");
 const path = require("path");
 const { getPineconeIndex } = require("../config/pinecone");
 
-let GoogleGenAIEmbeddings = null;
-let ChatGoogleGenAI = null;
+let GoogleGenerativeAIEmbeddings = null;
+let ChatGoogleGenerativeAI = null;
 
 const initLangchainModules = async () => {
-  if (!GoogleGenAIEmbeddings || !ChatGoogleGenAI) {
+  if (!GoogleGenerativeAIEmbeddings || !ChatGoogleGenerativeAI) {
     const googleGenAIMod = await import("@langchain/google-genai");
-    GoogleGenAIEmbeddings = googleGenAIMod.GoogleGenAIEmbeddings;
-    ChatGoogleGenAI = googleGenAIMod.ChatGoogleGenAI;
+    GoogleGenerativeAIEmbeddings = googleGenAIMod.GoogleGenerativeAIEmbeddings;
+    ChatGoogleGenerativeAI = googleGenAIMod.ChatGoogleGenerativeAI;
   }
 
   return {
-    embeddings: new GoogleGenAIEmbeddings({
+    embeddings: new GoogleGenerativeAIEmbeddings({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "text-embedding-004",
     }),
-    ChatGoogleGenAI,
+    ChatGoogleGenerativeAI,
   };
 };
 
@@ -105,7 +105,7 @@ exports.askQuestion = async (req, res) => {
     if (!sessionId || !message)
       return res.status(400).json({ msg: "Missing sessionId or message" });
 
-    const { embeddings, ChatGoogleGenAI } = await initLangchainModules();
+    const { embeddings, ChatGoogleGenerativeAI } = await initLangchainModules();
 
     const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
       pineconeIndex,
@@ -148,7 +148,7 @@ ${contextText || "No matching context found for this session."}
       return 1800;
     };
 
-    const model = new ChatGoogleGenAI({
+    const model = new ChatGoogleGenerativeAI({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "gemini-2.5-flash",
       temperature: 0.1,
