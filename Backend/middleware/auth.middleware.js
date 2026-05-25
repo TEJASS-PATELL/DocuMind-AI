@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
   const token = req.cookies.token;
+  
   if (!token) {
     return res.status(401).json({ msg: "No token, access denied" });
   }
@@ -13,10 +14,8 @@ module.exports = (req, res, next) => {
       userid: decoded.userid || decoded.id || decoded.userId
     };
 
-    if (!req.session) req.session = {};
-
     next();
   } catch (err) {
-    res.status(401).json({ msg: "Invalid token" });
+    return res.status(401).json({ msg: "Invalid token" });
   }
 };
