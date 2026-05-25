@@ -32,7 +32,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: process.env.CLIENT_URL + "/login",
+    failureRedirect: (process.env.CLIENT_URL) + "/login",
     session: false,
   }),
   (req, res) => {
@@ -47,7 +47,7 @@ router.get(
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.redirect(process.env.CLIENT_URL + "/chatbot");
+    res.redirect((process.env.CLIENT_URL) + "/chatbot");
   }
 );
 
