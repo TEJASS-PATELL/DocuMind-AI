@@ -69,20 +69,14 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  req.logout?.(() => { });
-  req.session?.destroy((err) => {
-    if (err) console.error("Session destroy error:", err);
-  });
-
   res.clearCookie("token", cookieOptions);
-
   res.status(200).json({ msg: "Logged out successfully" });
 };
 
 exports.update_detail = (req, res) => {
-  const { language, level, yogaMode, replyType } = req.body;
+  const { language, yogaMode, replyType } = req.body;
 
-  if (!language || !level)
+  if (!language)
     return res.status(400).json({ message: "Language and level are required" });
 
   if (!req.user)
@@ -91,7 +85,6 @@ exports.update_detail = (req, res) => {
   const yogaModeBool = yogaMode === true || yogaMode === "true" || yogaMode === 1 || yogaMode === "1";
 
   req.session.language = language;
-  req.session.level = level;
   req.session.replyType = replyType;
   req.session.yogaMode = yogaModeBool;
 
@@ -99,9 +92,8 @@ exports.update_detail = (req, res) => {
     if (err) console.error("Session save error:", err);
 
     res.json({
-      message: `Preferences set: ${language} (${level}), YogaMode: ${req.session.yogaMode ? "ON" : "OFF"}`,
+      message: `Preferences set: ${language} YogaMode: ${req.session.yogaMode ? "ON" : "OFF"}`,
       language,
-      level,
       replyType,
       yogaMode: req.session.yogaMode,
     });
@@ -110,15 +102,14 @@ exports.update_detail = (req, res) => {
 
 exports.get_detail = (req, res) => {
   if (!req.user) {
-    return res.json({ id: null, language: "", level: "", yogaMode: false, replyType: "" });
+    return res.json({ id: null, language: "", yogaMode: false, replyType: "" });
   }
 
   const language = req.session.language || "";
-  const level = req.session.level || "";
   const replyType = req.session.replyType || "";
   const yogaMode = !!req.session.yogaMode;
 
-  res.json({ id: req.user.userid, language, level, yogaMode, replyType });
+  res.json({ id: req.user.userid, language, yogaMode, replyType });
 };
 
 exports.user_info = async (req, res) => {
@@ -135,7 +126,6 @@ exports.user_info = async (req, res) => {
       name: rows[0].name,
       email: rows[0].email,
       language: req.session.language || "",
-      level: req.session.level || "",
       replyType: req.session.replyType || "",
       yogaMode: Boolean(req.session.yogaMode),
     });
@@ -166,10 +156,6 @@ exports.deleteAccount = async (req, res) => {
     }
 
     await db.execute("DELETE FROM users WHERE id = ?", [userId]);
-
-    req.session?.destroy(err => {
-      if (err) console.error("Session destroy error:", err);
-    });
 
     res.clearCookie("token", cookieOptions);
 
