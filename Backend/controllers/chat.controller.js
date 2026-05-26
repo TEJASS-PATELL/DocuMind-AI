@@ -11,17 +11,14 @@ class GeminiEmbeddings {
   }
 
   async embedContent(text) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${this.model}:embedContent?key=${this.apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: `models/${this.model}`,
-          content: { parts: [{ text }] },
-        }),
-      }
-    );
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:embedContent?key=${this.apiKey}`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: { parts: [{ text: String(text) }] },
+      }),
+    });
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.error?.message || "Embedding API call failed");
@@ -50,13 +47,34 @@ const initChatModel = async () => {
 };
 
 const parsePdf = async (buffer) => {
-  const pdfParseModule = require("pdf-parse");
-  const pdfParse = typeof pdfParseModule === "function"
-    ? pdfParseModule
-    : pdfParseModule.default;
-  if (typeof pdfParse !== "function") {
-    throw new Error("pdf-parse module could not be loaded as a function");
+  let pdfParse;
+
+  try {
+    const mod = require("pdf-parse");
+    if (typeof mod === "function") {
+      pdfParse = mod;
+    } else if (typeof mod?.default === "function") {
+      pdfParse = mod.default;
+    } else if (typeof mod?.parse === "function") {
+      pdfParse = mod.parse;
+    }
+  } catch (e) {
+    console.error("pdf-parse require failed:", e.message);
   }
+
+  if (typeof pdfParse !== "function") {
+    try {
+      const mod = await import("pdf-parse");
+      pdfParse = mod.default || mod;
+    } catch (e) {
+      console.error("pdf-parse dynamic import failed:", e.message);
+    }
+  }
+
+  if (typeof pdfParse !== "function") {
+    throw new Error("pdf-parse could not be loaded. Check if it is installed in package.json.");
+  }
+
   return pdfParse(buffer);
 };
 
@@ -88,11 +106,7 @@ exports.uploadDocument = async (req, res) => {
 
     const docs = chunks.map((chunk) => ({
       pageContent: chunk,
-      metadata: {
-        sessionId,
-        userId,
-        source: req.file.originalname,
-      },
+      metadata: { sessionId, userId, source: req.file.originalname },
     }));
 
     await PineconeStore.fromDocuments(docs, embeddings, {
@@ -101,22 +115,13 @@ exports.uploadDocument = async (req, res) => {
       maxConcurrency: 5,
     });
 
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
-    return res.status(200).json({
-      msg: "PDF embeddings saved successfully in Pinecone",
-    });
+    return res.status(200).json({ msg: "PDF embeddings saved successfully in Pinecone" });
   } catch (error) {
     console.error("Error in uploadDocument:", error);
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-    return res.status(500).json({
-      msg: "Pinecone ingestion failed",
-      error: error.message,
-    });
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(500).json({ msg: "Pinecone ingestion failed", error: error.message });
   }
 };
 
@@ -151,7 +156,6 @@ exports.askQuestion = async (req, res) => {
     let baseSystemInstruction = focusMode
       ? "You are in Focus Mode. Be extra sharp, analytical, and precise."
       : "You are an expert document assistant.";
-
     baseSystemInstruction += `\nRespond in language: ${language},\nand format response style as: ${replyType}.`;
 
     const systemInstruction = `
@@ -159,7 +163,6 @@ ${baseSystemInstruction}
 
 CRITICAL INSTRUCTION:
 Answer the user's question based strictly on the Context provided below.
-
 If the context doesn't contain the answer, politely say:
 "Bro, uploaded document me ye information nahi mili."
 
