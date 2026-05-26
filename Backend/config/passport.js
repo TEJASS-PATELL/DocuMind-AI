@@ -9,7 +9,7 @@ passport.use(
   new GoogleStrategy(
     {
       clientID: GOOGLE_CLIENT_ID,
-      clientSecret: GoogleClient_SECRET,
+      clientSecret: GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -19,7 +19,7 @@ passport.use(
 
         const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
         let user;
-        
+
         if (existing.length > 0) {
           user = existing[0];
         } else {

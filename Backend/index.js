@@ -5,6 +5,7 @@ const chatRoutes = require("./routers/chatRoutes");
 const authRoutes = require("./routers/authroutes");
 const session = require('express-session');
 const cookieParser = require("cookie-parser");
+const passport = require("./config/passport");
 require("dotenv").config();
 
 const PORT = process.env.PORT || 5000;
@@ -34,6 +35,7 @@ app.use(session({
     sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax'
   }
 }));
+app.use(passport.initialize());
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 
