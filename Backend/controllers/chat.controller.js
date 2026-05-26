@@ -4,7 +4,6 @@ const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-// Direct v1 API call — bypasses langchain wrapper and v1beta issue completely
 class GeminiEmbeddings {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY;
