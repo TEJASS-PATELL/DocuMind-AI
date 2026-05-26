@@ -7,11 +7,11 @@ const { getPineconeIndex } = require("../config/pinecone");
 class GeminiEmbeddings {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY;
-    this.model = "text-embedding-004";
+    this.model = "embedding-001";
   }
 
   async embedContent(text) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:embedContent?key=${this.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/${this.model}:embedContent?key=${this.apiKey}`;
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -23,12 +23,14 @@ class GeminiEmbeddings {
     if (!response.ok) {
       throw new Error(data.error?.message || "Embedding API call failed");
     }
+    if (!data.embedding || !data.embedding.values) {
+      throw new Error("Invalid response format from Google Embeddings");
+    }
     return data.embedding.values;
   }
 
   async embedDocuments(texts) {
-    const results = await Promise.all(texts.map((t) => this.embedContent(t)));
-    return results;
+    return Promise.all(texts.map((t) => this.embedContent(t)));
   }
 
   async embedQuery(text) {
@@ -37,7 +39,6 @@ class GeminiEmbeddings {
 }
 
 let ChatGoogleGenerativeAI = null;
-
 const initChatModel = async () => {
   if (!ChatGoogleGenerativeAI) {
     const mod = await import("@langchain/google-genai");
@@ -47,35 +48,12 @@ const initChatModel = async () => {
 };
 
 const parsePdf = async (buffer) => {
-  let pdfParse;
-
   try {
-    const mod = require("pdf-parse");
-    if (typeof mod === "function") {
-      pdfParse = mod;
-    } else if (typeof mod?.default === "function") {
-      pdfParse = mod.default;
-    } else if (typeof mod?.parse === "function") {
-      pdfParse = mod.parse;
-    }
+    const pdfParse = require("pdf-parse");
+    return await pdfParse(buffer);
   } catch (e) {
-    console.error("pdf-parse require failed:", e.message);
+    throw new Error("Failed to parse PDF: " + e.message);
   }
-
-  if (typeof pdfParse !== "function") {
-    try {
-      const mod = await import("pdf-parse");
-      pdfParse = mod.default || mod;
-    } catch (e) {
-      console.error("pdf-parse dynamic import failed:", e.message);
-    }
-  }
-
-  if (typeof pdfParse !== "function") {
-    throw new Error("pdf-parse could not be loaded. Check if it is installed in package.json.");
-  }
-
-  return pdfParse(buffer);
 };
 
 exports.uploadDocument = async (req, res) => {
@@ -89,7 +67,6 @@ exports.uploadDocument = async (req, res) => {
     if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
 
     const embeddings = new GeminiEmbeddings();
-
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
     const extractedText = pdfData.text;
@@ -112,14 +89,11 @@ exports.uploadDocument = async (req, res) => {
     await PineconeStore.fromDocuments(docs, embeddings, {
       pineconeIndex,
       namespace: sessionId,
-      maxConcurrency: 5,
     });
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-
-    return res.status(200).json({ msg: "PDF embeddings saved successfully in Pinecone" });
+    return res.status(200).json({ msg: "PDF embeddings saved successfully" });
   } catch (error) {
-    console.error("Error in uploadDocument:", error);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     return res.status(500).json({ msg: "Pinecone ingestion failed", error: error.message });
   }
@@ -129,17 +103,9 @@ exports.askQuestion = async (req, res) => {
   try {
     const pineconeIndex = getPineconeIndex();
     const userId = req.user?.userid;
-    const {
-      sessionId,
-      message,
-      language = "english",
-      focusMode,
-      replyType = "Concise",
-    } = req.body;
+    const { sessionId, message, language, focusMode, replyType } = req.body;
 
     if (!userId) return res.status(401).json({ msg: "User not authenticated" });
-    if (!sessionId || !message)
-      return res.status(400).json({ msg: "Missing sessionId or message" });
 
     const embeddings = new GeminiEmbeddings();
     const ChatModel = await initChatModel();
@@ -153,43 +119,16 @@ exports.askQuestion = async (req, res) => {
     const relevantDocs = await retriever.invoke(message);
     const contextText = relevantDocs.map((d) => d.pageContent).join("\n\n");
 
-    let baseSystemInstruction = focusMode
-      ? "You are in Focus Mode. Be extra sharp, analytical, and precise."
-      : "You are an expert document assistant.";
-    baseSystemInstruction += `\nRespond in language: ${language},\nand format response style as: ${replyType}.`;
-
-    const systemInstruction = `
-${baseSystemInstruction}
-
-CRITICAL INSTRUCTION:
-Answer the user's question based strictly on the Context provided below.
-If the context doesn't contain the answer, politely say:
-"Bro, uploaded document me ye information nahi mili."
-
---- DOCUMENT CONTEXT START ---
-${contextText || "No matching context found for this session."}
---- DOCUMENT CONTEXT END ---
-`;
-
-    const tokenMap = (type) => {
-      const normalized = type.toLowerCase();
-      if (normalized.includes("short")) return 900;
-      if (normalized.includes("balanced")) return 1400;
-      if (normalized.includes("detailed")) return 2500;
-      return 1800;
-    };
+    const systemInstruction = `Answer strictly from context.
+    Context: ${contextText || "No context found."}
+    Language: ${language || 'English'}
+    Style: ${replyType || 'Balanced'}
+    Mode: ${focusMode ? 'Sharp & Precise' : 'Normal'}`;
 
     const model = new ChatModel({
       apiKey: process.env.GEMINI_API_KEY,
-      modelName: "gemini-2.5-flash",
+      modelName: "gemini-1.5-flash",
       temperature: 0.1,
-      maxOutputTokens: tokenMap(replyType),
-      safetySettings: [
-        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-      ],
     });
 
     const result = await model.invoke([
@@ -199,10 +138,6 @@ ${contextText || "No matching context found for this session."}
 
     return res.json({ reply: result.content });
   } catch (error) {
-    console.error("Error in askQuestion RAG:", error);
-    return res.status(500).json({
-      reply: "Sorry, vector DB query failed.",
-      error: error.message,
-    });
+    return res.status(500).json({ reply: "Query failed", error: error.message });
   }
 };
