@@ -45,10 +45,17 @@ const InputArea: React.FC<InputAreaProps> = ({
   const isDisabled = isLoading || !isReadyToChat;
   const canSend = !isDisabled && (userInput.trim().length > 0 || uploadedFiles.length > 0);
 
+  // Centralized wrapper logic taaki message send hote hi UI chips empty ho jayein
+  const triggerSend = () => {
+    if (!canSend) return;
+    handleSendMessage();
+    setUploadedFiles([]); // Ek baar upload pipeline hit hone ke baad local list clean
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && canSend) {
       e.preventDefault();
-      handleSendMessage();
+      triggerSend();
     }
   };
 
@@ -63,18 +70,13 @@ const InputArea: React.FC<InputAreaProps> = ({
         raw: file,
       };
       setUploadedFiles(prev => [...prev, entry]);
-      handleFileUpload(file);
+      handleFileUpload(file); // Parent handler hit hoga jo server pe file dega
     });
     e.target.value = '';
   };
 
   const removeFile = (id: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== id));
-  };
-
-  const onSend = () => {
-    handleSendMessage();
-    setUploadedFiles([]);
   };
 
   return (
@@ -135,7 +137,7 @@ const InputArea: React.FC<InputAreaProps> = ({
 
         <button
           className={`input-btn input-btn--send${canSend ? ' input-btn--active' : ''}`}
-          onClick={onSend}
+          onClick={triggerSend}
           disabled={!canSend}
           title="Send"
           type="button"

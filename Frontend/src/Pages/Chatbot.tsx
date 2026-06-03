@@ -21,10 +21,11 @@ const Chatbot: React.FC = () => {
     const [displayedText, setDisplayedText] = useState("");
     const [userId, setUserId] = useState<string | null>(null);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [sessionId, setSessionId] = useState<string>(`session-${Date.now()}`);
 
     const [settings, setSettings] = useState({
         language: "english",
-        yogaMode: false,
+        focusMode: false,
         replyType: "concise"
     });
 
@@ -37,7 +38,7 @@ const Chatbot: React.FC = () => {
                 setUserId(data.id || null);
                 setSettings({
                     language: data.language || "english",
-                    yogaMode: data.yogaMode || false,
+                    focusMode: data.focusMode || false,
                     replyType: data.replyType || "concise"
                 });
             } catch {
@@ -49,6 +50,7 @@ const Chatbot: React.FC = () => {
 
     const handleNewChat = () => {
         setMessages([]);
+        setSessionId(`session-${Date.now()}`); 
     };
 
     const typeMessage = (fullText: string) => {
@@ -65,6 +67,34 @@ const Chatbot: React.FC = () => {
         }, 15);
     };
 
+    const handleFileUpload = async (file: File) => {
+        setIsLoading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("sessionId", sessionId);
+
+        try {
+            const { data } = await api.post("/api/chats/upload", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            
+            setMessages(prev => [
+                ...prev, 
+                { role: "model", text: `📚 System: "${file.name}" successfully process ho gayi hai! Ab aap iske baare me kuch bhi puch sakte hain.` }
+            ]);
+        } catch (error) {
+            console.error("File upload failed:", error);
+            setMessages(prev => [
+                ...prev, 
+                { role: "model", text: `❌ Error: "${file.name}" ko process karne me dikkat aayi.` }
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleSendMessage = async () => {
         const text = userInput.trim();
         if (!text || isLoading || !isReadyToChat) return;
@@ -74,9 +104,10 @@ const Chatbot: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const { data } = await api.post("/api/chats/startChat", {
-                message: text,
-                ...settings 
+            const { data } = await api.post("/api/chats/startChat", { 
+                message: text, 
+                sessionId,
+                ...settings
             });
             typeMessage(data?.reply || "No response.");
         } catch {
@@ -115,6 +146,7 @@ const Chatbot: React.FC = () => {
                         userInput={userInput}
                         setUserInput={setUserInput}
                         handleSendMessage={handleSendMessage}
+                        handleFileUpload={handleFileUpload}
                         isLoading={isLoading}
                         isReadyToChat={isReadyToChat}
                     />
@@ -133,4 +165,3 @@ const Chatbot: React.FC = () => {
 };
 
 export default Chatbot;
-

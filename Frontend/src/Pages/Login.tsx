@@ -15,10 +15,10 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       await api.post('/api/auth/login', { email, password });
-      toast.success("Login successful! Welcome back");
-      navigate("/chatbot", { replace: true });
-    } catch (error: any) {
-      toast.error('Login failed: ' + (error.response?.data?.msg || error.message));
+      toast.success('Login successful! Welcome back');
+      navigate('/chatbot', { replace: true });
+    } catch {
+      toast.error('Login failed');
     }
   };
 
@@ -29,22 +29,22 @@ const Login: React.FC = () => {
   return (
     <div className="login-wrapper">
       <div className="login-box">
-
         <div className="logo-top-left">
-          <img src="/brain.png" alt="Logo" />
+          <span className="logo-name">DocuMind AI</span>
         </div>
 
         <h2 className="login-title">
-          Login to <span>Body+Brain</span>
+          Welcome <em>Back</em>
         </h2>
-        <p className="login-subtitle">Welcome back! Please enter your credentials.</p>
+        <p className="login-subtitle">Sign in to your account to continue.</p>
 
         <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
-            <label>Email</label>
+            <label htmlFor="email">Email</label>
             <input
+              id="email"
               type="email"
-              placeholder="example@email.com"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -52,8 +52,9 @@ const Login: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
+              id="password"
               type="password"
               placeholder="••••••••"
               value={password}
@@ -62,24 +63,25 @@ const Login: React.FC = () => {
             />
           </div>
 
-          <button type="submit" className="login-btn">Login</button>
+          <button type="submit" className="login-btn">Sign in</button>
         </form>
 
-        <div className="dividerr"><span>OR</span></div>
+        <div className="divider-line"><span>or</span></div>
 
         <button type="button" className="google-btn" onClick={handleGoogleLogin}>
-          <FcGoogle size={20} />
-          <span>Sign in with Google</span>
+          <FcGoogle size={18} />
+          <span>Continue with Google</span>
         </button>
 
         <p className="signup-text">
-          Don’t have an account? <Link to="/signup">Sign up</Link>
+          Don't have an account? <Link to="/signup">Create one</Link>
         </p>
       </div>
 
       <div className="bottom-system-status">
-        <Sparkles size={12} />
-        <span>System Ready: V2.0.5</span>
+        <span className="status-dot" />
+        <Sparkles size={11} />
+        <span>System ready · v2.0.5</span>
       </div>
     </div>
   );

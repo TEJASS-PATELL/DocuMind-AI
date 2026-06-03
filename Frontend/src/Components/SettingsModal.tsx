@@ -9,30 +9,28 @@ interface SettingsModalProps {
   onClose: () => void;
   current: {
     language: string;
-    yogaMode: boolean;
+    focusMode: boolean;
     replyType: string;
   };
-  onSave: (updated: { language: string; yogaMode: boolean; replyType: string }) => void;
+  onSave: (updated: { language: string; focusMode: boolean; replyType: string }) => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave }) => {
   const navigate = useNavigate();
 
   const [language, setLanguage] = useState(current.language);
-  const [yogaMode, setYogaMode] = useState(current.yogaMode);
+  const [focusMode, setFocusMode] = useState(current.focusMode);
   const [replyType, setReplyType] = useState(current.replyType);
   
   const userName = localStorage.getItem('username') || 'User';
   const email = localStorage.getItem('email') || 'No email found';
   
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   const handleSubmit = async () => {
     setIsSaving(true);
     try {
-      const updatedSettings = { language, yogaMode, replyType };
+      const updatedSettings = { language, focusMode, replyType };
       await api.post('/api/auth/update_detail', updatedSettings);
       toast.success('Preferences saved');
       onSave(updatedSettings);
@@ -45,7 +43,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
   };
 
   const handleDeleteAccount = async () => {
-    setIsDeleting(true);
     try {
       await api.delete('/api/auth/delete-account');
       toast.success('Account deleted');
@@ -53,8 +50,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
       navigate('/login', { replace: true });
     } catch {
       toast.error('Error deleting account');
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -113,8 +108,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
                 <span className="toggle-desc">Precise answers only</span>
               </div>
               <button 
-                className={`toggle-switch ${yogaMode ? 'toggle-switch--on' : ''}`}
-                onClick={() => setYogaMode(!yogaMode)}
+                className={`toggle-switch ${focusMode ? 'toggle-switch--on' : ''}`}
+                onClick={() => setFocusMode(!focusMode)}
               >
                 <span className="toggle-thumb" />
               </button>
@@ -128,21 +123,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
               <Save size={15} /> {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
 
-            {!showConfirmDelete ? (
-              <button className="setting-btn setting-btn--delete-init" onClick={() => setShowConfirmDelete(true)}>
-                <Trash2 size={15} /> Delete Account
-              </button>
-            ) : (
-              <div className="delete-confirm">
-                <p className="delete-confirm-text">Sure? This cannot be undone.</p>
-                <div className="delete-confirm-btns">
-                  <button className="setting-btn setting-btn--delete" onClick={handleDeleteAccount} disabled={isDeleting}>
-                    {isDeleting ? '...' : 'Confirm'}
-                  </button>
-                  <button className="setting-btn setting-btn--cancel" onClick={() => setShowConfirmDelete(false)}>Cancel</button>
-                </div>
-              </div>
-            )}
+            <button className="setting-btn setting-btn--delete-init" onClick={handleDeleteAccount}>
+              <Trash2 size={15} /> Delete Account
+            </button>
           </div>
         </div>
       </div>

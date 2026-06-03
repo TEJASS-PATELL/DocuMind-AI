@@ -1,0 +1,13 @@
+<svg width="100%" viewBox="0 0 680 160" role="img" xmlns="http://www.w3.org/2000/svg" style="">
+<title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:15px;font-weight:400;text-anchor:start;dominant-baseline:auto">DocuMind AI wordmark</title>
+<desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:15px;font-weight:400;text-anchor:start;dominant-baseline:auto">DocuMind black, AI italic green</desc>
+
+<text x="340" y="90" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="72" font-weight="400" style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Georgia, &quot;Times New Roman&quot;, serif;font-size:72px;font-weight:400;text-anchor:middle;dominant-baseline:auto">
+  <tspan fill="#0A0A0A" style="fill:rgb(10, 10, 10);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Georgia, &quot;Times New Roman&quot;, serif;font-size:72px;font-weight:400;text-anchor:middle;dominant-baseline:auto">DocuMind</tspan><tspan fill="#2A5C45" font-style="italic" style="fill:rgb(42, 92, 69);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Georgia, &quot;Times New Roman&quot;, serif;font-size:72px;font-weight:400;font-style:italic;text-anchor:middle;dominant-baseline:auto"> AI</tspan>
+</text>
+
+<line x1="240" y1="108" x2="440" y2="108" stroke="#2A5C45" stroke-width="1" opacity="0.3" style="fill:rgb(0, 0, 0);stroke:rgb(42, 92, 69);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.3;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:15px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+<text x="340" y="132" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#6B6860" letter-spacing="4" style="fill:rgb(107, 104, 96);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Arial, sans-serif;font-size:13px;font-weight:400;text-anchor:middle;dominant-baseline:auto">DOCUMENT INTELLIGENCE</text>
+
+</svg>

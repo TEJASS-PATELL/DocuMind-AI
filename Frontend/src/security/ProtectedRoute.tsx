@@ -12,17 +12,16 @@ const ProtectedRoute: React.FC = () => {
       try {
         await api.get('/api/auth/check');
         setIsAuth(true);
-      } catch (err) {
+      } catch {
         setIsAuth(false);
       } finally {
         setIsLoading(false);
       }
     };
-
     checkLogin();
   }, []);
 
-  if (isLoading) return <Loader text="Loading Brain+Body AI...." />
+  if (isLoading) return <Loader />
   return isAuth ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
