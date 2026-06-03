@@ -1,4 +1,3 @@
-import React from 'react';
 import { FaBrain, FaComments, FaUpload } from 'react-icons/fa';
 import "./Working.css"
 
