@@ -74,7 +74,7 @@ const Chatbot: React.FC = () => {
         formData.append("sessionId", sessionId);
 
         try {
-            const { data } = await api.post("/api/chats/upload", formData, {
+            await api.post("/api/chats/upload", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
