@@ -1,4 +1,3 @@
-import React from 'react'
 import { FaBolt, FaBrain, FaChartBar, FaFileAlt, FaLock, FaSearch } from 'react-icons/fa';
 import "./Feature.css"
 
