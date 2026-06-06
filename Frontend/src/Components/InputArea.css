@@ -5,56 +5,55 @@
   font-family: 'DM Sans', sans-serif;
   display: flex;
   flex-direction: column;
-  /* position relative zaroori hai taaki chips iske andar align rahein */
-  position: relative; 
+  position: relative;
 }
 
 .file-chips {
   position: absolute;
-  /* input-area ke padding ke hisab se top par position kiya */
-  bottom: calc(100% - 4px); 
+  bottom: calc(100% - 4px);
   left: 20px;
   right: 20px;
-  
   display: flex;
-  flex-wrap: nowrap;          /* Wrap nahi hoga, ek line me rahega */
-  overflow-x: auto;          /* Agar zyada files hain toh andar hi scroll hoga */
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 8px;
   padding: 8px 0;
-  background: var(--bg);     /* Taaki piche ka chat text chhup jaye jab chips upar aayein */
+  background: var(--bg);
   z-index: 10;
-  
-  /* Scrollbar hide karne ke liye */
-  scrollbar-width: none;     
-  -ms-overflow-style: none;  
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   animation: chipsScaleIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.1) both;
 }
 
-/* Chrome, Safari ke liye scrollbar hide */
 .file-chips::-webkit-scrollbar {
   display: none;
 }
+
 @keyframes chipsScaleIn {
-  from { opacity: 0; transform: scale(0.95) translateY(4px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .file-chip {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px 10px 12px;
+  padding: 10px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-med);
   border-radius: 10px;
   max-width: 220px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: all 0.2s ease;
 }
 
 .file-chip:hover {
   border-color: var(--accent);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .file-chip-icon {
@@ -108,7 +107,7 @@
 }
 
 .file-chip-remove:hover {
-  background: #FFF0F0;
+  background: #fff0f0;
   color: #ff0000;
 }
 
@@ -185,21 +184,28 @@
 
 .input-btn--send {
   color: var(--text-subtle);
-  background: transparent;
 }
 
 .input-btn--send.input-btn--active {
   background: var(--text-primary);
-  color: #ffffff;
+  color: #fff;
 }
 
 .input-btn--send.input-btn--active:hover {
-  background: #111111;
+  background: #111;
   transform: translateY(-1px);
 }
 
 @media (max-width: 540px) {
-  .input-area { padding: 10px 12px; }
-  .file-chip { max-width: 150px; }
-  .file-chip-name { max-width: 80px; }
+  .input-area {
+    padding: 10px 12px;
+  }
+
+  .file-chip {
+    max-width: 150px;
+  }
+
+  .file-chip-name {
+    max-width: 80px;
+  }
 }
