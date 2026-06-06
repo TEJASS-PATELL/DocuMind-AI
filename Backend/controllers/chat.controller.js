@@ -4,42 +4,16 @@ const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-class GeminiEmbeddings {
-  constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY;
-    this.model = "text-embedding-004";
-  }
-
-  async embedContent(text) {
-    const url = `https://generativelanguage.googleapis.com/v1/models/${this.model}:embedContent?key=${this.apiKey}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: { parts: [{ text: String(text) }] },
-      }),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || "Embedding API call failed");
-    return data.embedding.values;
-  }
-
-  async embedDocuments(texts) {
-    return Promise.all(texts.map((t) => this.embedContent(t)));
-  }
-
-  async embedQuery(text) {
-    return this.embedContent(text);
-  }
-}
-
+let GoogleGenAIEmbeddings = null;
 let ChatGoogleGenerativeAI = null;
-const initChatModel = async () => {
-  if (!ChatGoogleGenerativeAI) {
+
+const initLangChainModels = async () => {
+  if (!GoogleGenAIEmbeddings || !ChatGoogleGenerativeAI) {
     const mod = await import("@langchain/google-genai");
+    GoogleGenAIEmbeddings = mod.GoogleGenAIEmbeddings;
     ChatGoogleGenerativeAI = mod.ChatGoogleGenerativeAI;
   }
-  return ChatGoogleGenerativeAI;
+  return { GoogleGenAIEmbeddings, ChatGoogleGenerativeAI };
 };
 
 const parsePdf = async (buffer) => {
@@ -53,13 +27,18 @@ const parsePdf = async (buffer) => {
 
 exports.uploadDocument = async (req, res) => {
   try {
-    const pineconeIndex = await getPineconeIndex(); // Await jaruri hai
+    const pineconeIndex = await getPineconeIndex();
     const userId = req.user?.userid;
     const { sessionId } = req.body;
 
     if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
 
-    const embeddings = new GeminiEmbeddings();
+    const { GoogleGenAIEmbeddings: EmbeddingsModel } = await initLangChainModels();
+    const embeddings = new EmbeddingsModel({
+      apiKey: process.env.GEMINI_API_KEY,
+      modelName: "text-embedding-004",
+    });
+
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
     
@@ -71,7 +50,6 @@ exports.uploadDocument = async (req, res) => {
       metadata: { sessionId, userId, source: req.file.originalname },
     }));
 
-    // Solid store logic
     await PineconeStore.fromDocuments(docs, embeddings, {
       pineconeIndex,
       namespace: sessionId,
@@ -91,8 +69,11 @@ exports.askQuestion = async (req, res) => {
     const pineconeIndex = await getPineconeIndex(); 
     const { sessionId, message, language } = req.body;
 
-    const embeddings = new GeminiEmbeddings();
-    const ChatModel = await initChatModel();
+    const { GoogleGenAIEmbeddings: EmbeddingsModel, ChatGoogleGenerativeAI: ChatModel } = await initLangChainModels();
+    const embeddings = new EmbeddingsModel({
+      apiKey: process.env.GEMINI_API_KEY,
+      modelName: "text-embedding-004",
+    });
 
     const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
       pineconeIndex,
