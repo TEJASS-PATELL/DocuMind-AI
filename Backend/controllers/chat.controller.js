@@ -7,7 +7,7 @@ const { getPineconeIndex } = require("../config/pinecone");
 class GeminiEmbeddings {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY;
-    this.model = "embedding-001";
+    this.model = "text-embedding-004";
   }
 
   async embedContent(text) {
