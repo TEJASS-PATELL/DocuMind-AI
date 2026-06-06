@@ -20,12 +20,7 @@ class GeminiEmbeddings {
       }),
     });
     const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error?.message || "Embedding API call failed");
-    }
-    if (!data.embedding || !data.embedding.values) {
-      throw new Error("Invalid response format from Google Embeddings");
-    }
+    if (!response.ok) throw new Error(data.error?.message || "Embedding API call failed");
     return data.embedding.values;
   }
 
@@ -52,60 +47,49 @@ const parsePdf = async (buffer) => {
     const pdfParse = require("pdf-parse");
     return await pdfParse(buffer);
   } catch (e) {
-    throw new Error("Failed to parse PDF: " + e.message);
+    throw new Error("PDF parse fail: " + e.message);
   }
 };
 
 exports.uploadDocument = async (req, res) => {
   try {
-    const pineconeIndex = getPineconeIndex();
+    const pineconeIndex = await getPineconeIndex(); // Await jaruri hai
     const userId = req.user?.userid;
     const { sessionId } = req.body;
 
-    if (!userId) return res.status(401).json({ msg: "User not authenticated" });
-    if (!sessionId) return res.status(400).json({ msg: "Missing sessionId" });
-    if (!req.file) return res.status(400).json({ msg: "No file uploaded" });
+    if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
 
     const embeddings = new GeminiEmbeddings();
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
-    const extractedText = pdfData.text;
-
-    if (!extractedText || extractedText.trim().length === 0) {
-      return res.status(400).json({ msg: "PDF is empty or could not be parsed" });
-    }
-
-    const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 1000,
-      chunkOverlap: 200,
-    });
-    const chunks = await splitter.splitText(extractedText);
+    
+    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
+    const chunks = await splitter.splitText(pdfData.text);
 
     const docs = chunks.map((chunk) => ({
       pageContent: chunk,
       metadata: { sessionId, userId, source: req.file.originalname },
     }));
 
+    // Solid store logic
     await PineconeStore.fromDocuments(docs, embeddings, {
       pineconeIndex,
       namespace: sessionId,
     });
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(200).json({ msg: "PDF embeddings saved successfully" });
+    return res.status(200).json({ msg: "Success" });
   } catch (error) {
+    console.error("Upload Error:", error);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(500).json({ msg: "Pinecone ingestion failed", error: error.message });
+    return res.status(500).json({ msg: "Connection failed", error: error.message });
   }
 };
 
 exports.askQuestion = async (req, res) => {
   try {
-    const pineconeIndex = getPineconeIndex();
-    const userId = req.user?.userid;
-    const { sessionId, message, language, focusMode, replyType } = req.body;
-
-    if (!userId) return res.status(401).json({ msg: "User not authenticated" });
+    const pineconeIndex = await getPineconeIndex(); 
+    const { sessionId, message, language } = req.body;
 
     const embeddings = new GeminiEmbeddings();
     const ChatModel = await initChatModel();
@@ -115,29 +99,21 @@ exports.askQuestion = async (req, res) => {
       namespace: sessionId,
     });
 
-    const retriever = vectorStore.asRetriever({ k: 4 });
-    const relevantDocs = await retriever.invoke(message);
-    const contextText = relevantDocs.map((d) => d.pageContent).join("\n\n");
-
-    const systemInstruction = `Answer strictly from context.
-    Context: ${contextText || "No context found."}
-    Language: ${language || 'English'}
-    Style: ${replyType || 'Balanced'}
-    Mode: ${focusMode ? 'Sharp & Precise' : 'Normal'}`;
+    const results = await vectorStore.similaritySearch(message, 4);
+    const context = results.map(r => r.pageContent).join("\n");
 
     const model = new ChatModel({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "gemini-1.5-flash",
-      temperature: 0.1,
+      temperature: 0.3,
     });
 
-    const result = await model.invoke([
-      { role: "system", content: systemInstruction },
-      { role: "user", content: message },
-    ]);
+    const prompt = `Context: ${context}\n\nQuestion: ${message}\nAnswer in ${language || 'Hinglish'}:`;
+    const result = await model.invoke(prompt);
 
     return res.json({ reply: result.content });
   } catch (error) {
-    return res.status(500).json({ reply: "Query failed", error: error.message });
+    console.error("Chat Error:", error);
+    return res.status(500).json({ reply: "Connection failed", error: error.message });
   }
 };
