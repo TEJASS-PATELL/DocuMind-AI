@@ -4,10 +4,13 @@ const helmetConfig = require("./middleware/helmet");
 const chatRoutes = require("./routers/chatRoutes");
 const authRoutes = require("./routers/authroutes");
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+const pool = require('./config/db');
 const cookieParser = require("cookie-parser");
 const passport = require("./config/passport");
 require("dotenv").config();
 
+const sessionStore = new MySQLStore({}, pool);
 const PORT = process.env.PORT || 5000;
 const app = express();
 
@@ -27,12 +30,16 @@ app.use(
 );
 
 app.use(session({
+  key: 'documind_session_cookie',
   secret: process.env.SESSION_SECRET,
   resave: false,
+  store: sessionStore,
   saveUninitialized: true, 
   cookie: {
+    maxAge: 1000 * 60 * 60 * 24,
     secure: process.env.NODE_ENV === "production", 
-    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax'
+    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax',
+    httpOnly: true
   }
 }));
 app.use(passport.initialize());
