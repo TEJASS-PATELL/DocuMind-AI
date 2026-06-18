@@ -29,7 +29,7 @@ exports.uploadDocument = async (req, res) => {
     if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
 
     const embeddings = new GoogleGenAIEmbeddings({
-      apiKey: process.env.GEMINI_API_KEY,
+      apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
       modelName: "text-embedding-004",
     });
 
@@ -61,9 +61,15 @@ exports.uploadDocument = async (req, res) => {
 exports.askQuestion = async (req, res) => {
   try {
     const { sessionId, message, language } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is missing from environment variables.");
+    }
 
     const model = new ChatGoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY,
+      apiKey: apiKey,
+      model: "gemini-1.5-flash",
       modelName: "gemini-1.5-flash",
       temperature: 0.3,
     });
@@ -76,7 +82,7 @@ exports.askQuestion = async (req, res) => {
 
     const pineconeIndex = await getPineconeIndex(); 
     const embeddings = new GoogleGenAIEmbeddings({
-      apiKey: process.env.GEMINI_API_KEY,
+      apiKey: apiKey,
       modelName: "text-embedding-004",
     });
 
