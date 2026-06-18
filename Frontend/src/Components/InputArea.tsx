@@ -45,11 +45,10 @@ const InputArea: React.FC<InputAreaProps> = ({
   const isDisabled = isLoading || !isReadyToChat;
   const canSend = !isDisabled && (userInput.trim().length > 0 || uploadedFiles.length > 0);
 
-  // Centralized wrapper logic taaki message send hote hi UI chips empty ho jayein
   const triggerSend = () => {
     if (!canSend) return;
     handleSendMessage();
-    setUploadedFiles([]); // Ek baar upload pipeline hit hone ke baad local list clean
+    setUploadedFiles([]); 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -70,7 +69,7 @@ const InputArea: React.FC<InputAreaProps> = ({
         raw: file,
       };
       setUploadedFiles(prev => [...prev, entry]);
-      handleFileUpload(file); // Parent handler hit hoga jo server pe file dega
+      handleFileUpload(file); 
     });
     e.target.value = '';
   };
