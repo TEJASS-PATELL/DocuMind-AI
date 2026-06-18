@@ -36,7 +36,7 @@ const isGreeting = (msg) => {
 const getModelAndEmbeddings = (apiKey) => {
   const model = new ChatGoogleGenerativeAI({
     apiKey,
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash-lite",
     temperature: 0.3,
   });
 
