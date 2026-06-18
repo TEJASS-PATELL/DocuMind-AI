@@ -69,8 +69,7 @@ exports.askQuestion = async (req, res) => {
 
     const model = new ChatGoogleGenerativeAI({
       apiKey: apiKey,
-      model: "gemini-1.5-flash",
-      modelName: "gemini-1.5-flash",
+      modelName: "gemini-2.5-flash",
       temperature: 0.3,
     });
 
