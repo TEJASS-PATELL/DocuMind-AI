@@ -7,12 +7,11 @@ const {
   ChatGoogleGenerativeAI,
 } = require("@langchain/google-genai");
 
-const { PDFParse } = require("pdf-parse");
+const pdfParse = require("pdf-parse");
 
 const parsePdf = async (buffer) => {
   try {
-    const parser = new PDFParse();
-    const data = await parser.parse(buffer);
+    const data = await pdfParse(buffer);
     return data;
   } catch (e) {
     throw new Error("PDF parse fail: " + e.message);
