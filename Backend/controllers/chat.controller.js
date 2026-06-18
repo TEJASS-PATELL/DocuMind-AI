@@ -4,8 +4,7 @@ const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-const { GoogleGenAIEmbeddings } = require("@langchain/google-genai/embeddings");
-const { ChatGoogleGenerativeAI } = require("@langchain/google-genai/chat_models");
+const { GoogleGenAIEmbeddings, ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 
 const parsePdf = async (buffer) => {
   try {
