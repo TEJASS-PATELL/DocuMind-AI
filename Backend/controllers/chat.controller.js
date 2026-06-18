@@ -4,31 +4,8 @@ const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-let GoogleGenAIEmbeddings = null;
-let ChatGoogleGenerativeAI = null;
-
-const initLangChainModels = async () => {
-  if (!GoogleGenAIEmbeddings || !ChatGoogleGenerativeAI) {
-    const mod = await import("@langchain/google-genai");
-    
-    GoogleGenAIEmbeddings = mod.GoogleGenAIEmbeddings || mod.default?.GoogleGenAIEmbeddings;
-    ChatGoogleGenerativeAI = mod.ChatGoogleGenerativeAI || mod.default?.ChatGoogleGenerativeAI;
-
-    if (!GoogleGenAIEmbeddings && mod.default) {
-      const keys = Object.keys(mod.default);
-      if (keys.includes("GoogleGenAIEmbeddings")) {
-        GoogleGenAIEmbeddings = mod.default.GoogleGenAIEmbeddings;
-      }
-    }
-    if (!ChatGoogleGenerativeAI && mod.default) {
-      const keys = Object.keys(mod.default);
-      if (keys.includes("ChatGoogleGenerativeAI")) {
-        ChatGoogleGenerativeAI = mod.default.ChatGoogleGenerativeAI;
-      }
-    }
-  }
-  return { GoogleGenAIEmbeddings, ChatGoogleGenerativeAI };
-};
+const { GoogleGenAIEmbeddings } = require("@langchain/google-genai");
+const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 
 const parsePdf = async (buffer) => {
   try {
@@ -47,13 +24,7 @@ exports.uploadDocument = async (req, res) => {
 
     if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
 
-    const { GoogleGenAIEmbeddings: EmbeddingsModel } = await initLangChainModels();
-    
-    if (!EmbeddingsModel) {
-      throw new Error("Failed to load GoogleGenAIEmbeddings from module.");
-    }
-
-    const embeddings = new EmbeddingsModel({
+    const embeddings = new GoogleGenAIEmbeddings({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "text-embedding-004",
     });
@@ -88,13 +59,7 @@ exports.askQuestion = async (req, res) => {
     const pineconeIndex = await getPineconeIndex(); 
     const { sessionId, message, language } = req.body;
 
-    const { GoogleGenAIEmbeddings: EmbeddingsModel, ChatGoogleGenerativeAI: ChatModel } = await initLangChainModels();
-    
-    if (!EmbeddingsModel || !ChatModel) {
-      throw new Error("Failed to load LangChain models from module.");
-    }
-
-    const embeddings = new EmbeddingsModel({
+    const embeddings = new GoogleGenAIEmbeddings({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "text-embedding-004",
     });
@@ -107,7 +72,7 @@ exports.askQuestion = async (req, res) => {
     const results = await vectorStore.similaritySearch(message, 4);
     const context = results.map(r => r.pageContent).join("\n");
 
-    const model = new ChatModel({
+    const model = new ChatGoogleGenerativeAI({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "gemini-1.5-flash",
       temperature: 0.3,
