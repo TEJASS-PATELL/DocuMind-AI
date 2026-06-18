@@ -2,23 +2,38 @@ const { PineconeStore } = require("@langchain/pinecone");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
-const { GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI } = require("@langchain/google-genai");
+const {
+  GoogleGenerativeAIEmbeddings,
+  ChatGoogleGenerativeAI,
+} = require("@langchain/google-genai");
+
+const pdfParseModule = require("pdf-parse");
+const pdfParse = pdfParseModule.default || pdfParseModule;
 
 const parsePdf = async (buffer) => {
   try {
-    const pdfParse = require("pdf-parse");
-    return await pdfParse(buffer);
+    const data = await pdfParse(buffer);
+    return data;
   } catch (e) {
     throw new Error("PDF parse fail: " + e.message);
   }
 };
 
 const isGreeting = (msg) => {
-  const greetings = ["hi", "hello", "hey", "hola", "sup", "good morning", "good afternoon", "good evening"];
-  return greetings.includes(msg.toLowerCase().trim());
+  const greetings = [
+    "hi", "hello", "hey", "hola", "sup",
+    "good morning", "good afternoon", "good evening",
+  ];
+  const cleaned = msg.toLowerCase().trim().replace(/\s+/g, " ");
+  return greetings.some(
+    (g) =>
+      cleaned === g ||
+      cleaned.startsWith(g + " ") ||
+      cleaned.endsWith(" " + g)
+  );
 };
 
-const getModelAndEmbeddings = (apiKey, language) => {
+const getModelAndEmbeddings = (apiKey) => {
   const model = new ChatGoogleGenerativeAI({
     apiKey,
     model: "gemini-2.0-flash",
@@ -39,7 +54,8 @@ exports.uploadDocument = async (req, res) => {
     const userId = req.user?.userid;
     const { sessionId } = req.body;
 
-    if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
+    if (!userId || !req.file)
+      return res.status(400).json({ msg: "Data missing" });
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) return res.status(500).json({ msg: "API key missing" });
@@ -49,12 +65,23 @@ exports.uploadDocument = async (req, res) => {
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
 
-    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
+    if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
+      throw new Error("PDF has no readable text.");
+    }
+
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1000,
+      chunkOverlap: 200,
+    });
     const chunks = await splitter.splitText(pdfData.text);
 
     const docs = chunks.map((chunk) => ({
       pageContent: chunk,
-      metadata: { sessionId, userId, source: req.file.originalname },
+      metadata: {
+        sessionId,
+        userId,
+        source: req.file.originalname,
+      },
     }));
 
     await PineconeStore.fromDocuments(docs, embeddings, {
@@ -78,6 +105,10 @@ exports.askQuestion = async (req, res) => {
 
     if (!apiKey) {
       return res.status(500).json({ reply: "API Key configuration missing." });
+    }
+
+    if (!message || message.trim().length === 0) {
+      return res.status(400).json({ reply: "Message cannot be empty." });
     }
 
     const { model, embeddings } = getModelAndEmbeddings(apiKey);
