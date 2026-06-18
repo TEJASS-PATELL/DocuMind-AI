@@ -10,8 +10,22 @@ let ChatGoogleGenerativeAI = null;
 const initLangChainModels = async () => {
   if (!GoogleGenAIEmbeddings || !ChatGoogleGenerativeAI) {
     const mod = await import("@langchain/google-genai");
+    
     GoogleGenAIEmbeddings = mod.GoogleGenAIEmbeddings || mod.default?.GoogleGenAIEmbeddings;
     ChatGoogleGenerativeAI = mod.ChatGoogleGenerativeAI || mod.default?.ChatGoogleGenerativeAI;
+
+    if (!GoogleGenAIEmbeddings && mod.default) {
+      const keys = Object.keys(mod.default);
+      if (keys.includes("GoogleGenAIEmbeddings")) {
+        GoogleGenAIEmbeddings = mod.default.GoogleGenAIEmbeddings;
+      }
+    }
+    if (!ChatGoogleGenerativeAI && mod.default) {
+      const keys = Object.keys(mod.default);
+      if (keys.includes("ChatGoogleGenerativeAI")) {
+        ChatGoogleGenerativeAI = mod.default.ChatGoogleGenerativeAI;
+      }
+    }
   }
   return { GoogleGenAIEmbeddings, ChatGoogleGenerativeAI };
 };
