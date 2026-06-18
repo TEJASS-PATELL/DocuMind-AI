@@ -116,7 +116,7 @@ const HomePage = () => {
 
             <div className="demo-footer">
               <span className="demo-input-fake">Ask a follow-up...</span>
-              <span className="demo-send"><FaArrowRight /></span>
+              <span className="demo-send"><FaArrowRight size={14}/></span>
             </div>
           </div>
 
