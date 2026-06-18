@@ -4,8 +4,13 @@ const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-const { GoogleGenAIEmbeddings } = require("@langchain/google-genai");
-const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
+const getGoogleGenAIModules = async () => {
+  const mod = await import("@langchain/google-genai");
+  return {
+    GoogleGenAIEmbeddings: mod.GoogleGenAIEmbeddings || mod.default?.GoogleGenAIEmbeddings,
+    ChatGoogleGenerativeAI: mod.ChatGoogleGenerativeAI || mod.default?.ChatGoogleGenerativeAI
+  };
+};
 
 const parsePdf = async (buffer) => {
   try {
@@ -16,6 +21,11 @@ const parsePdf = async (buffer) => {
   }
 };
 
+const isGreeting = (msg) => {
+  const greetings = ["hi", "hello", "hey", "hola", "sup", "good morning", "good afternoon", "good evening"];
+  return greetings.includes(msg.toLowerCase().trim());
+};
+
 exports.uploadDocument = async (req, res) => {
   try {
     const pineconeIndex = await getPineconeIndex();
@@ -23,6 +33,9 @@ exports.uploadDocument = async (req, res) => {
     const { sessionId } = req.body;
 
     if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
+
+    const { GoogleGenAIEmbeddings } = await getGoogleGenAIModules();
+    if (!GoogleGenAIEmbeddings) throw new Error("Failed to load GoogleGenAIEmbeddings module");
 
     const embeddings = new GoogleGenAIEmbeddings({
       apiKey: process.env.GEMINI_API_KEY,
@@ -56,9 +69,26 @@ exports.uploadDocument = async (req, res) => {
 
 exports.askQuestion = async (req, res) => {
   try {
-    const pineconeIndex = await getPineconeIndex(); 
     const { sessionId, message, language } = req.body;
+    const { GoogleGenAIEmbeddings, ChatGoogleGenerativeAI } = await getGoogleGenAIModules();
 
+    if (!ChatGoogleGenerativeAI || !GoogleGenAIEmbeddings) {
+      throw new Error("Failed to load LangChain modules");
+    }
+
+    const model = new ChatGoogleGenerativeAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      modelName: "gemini-1.5-flash",
+      temperature: 0.3,
+    });
+
+    if (isGreeting(message)) {
+      const prompt = `You are a helpful AI chatbot. Respond politely to the user greeting "${message}" in ${language || 'Hinglish'}.`;
+      const result = await model.invoke(prompt);
+      return res.json({ reply: result.content });
+    }
+
+    const pineconeIndex = await getPineconeIndex(); 
     const embeddings = new GoogleGenAIEmbeddings({
       apiKey: process.env.GEMINI_API_KEY,
       modelName: "text-embedding-004",
@@ -69,16 +99,15 @@ exports.askQuestion = async (req, res) => {
       namespace: sessionId,
     });
 
-    const results = await vectorStore.similaritySearch(message, 4);
-    const context = results.map(r => r.pageContent).join("\n");
+    let context = "";
+    try {
+      const results = await vectorStore.similaritySearch(message, 4);
+      context = results.map(r => r.pageContent).join("\n");
+    } catch (e) {
+      context = "";
+    }
 
-    const model = new ChatGoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      modelName: "gemini-1.5-flash",
-      temperature: 0.3,
-    });
-
-    const prompt = `Context: ${context}\n\nQuestion: ${message}\nAnswer in ${language || 'Hinglish'}:`;
+    const prompt = `Context: ${context || "No context available."}\n\nQuestion: ${message}\nAnswer in ${language || 'Hinglish'}:`;
     const result = await model.invoke(prompt);
 
     return res.json({ reply: result.content });
