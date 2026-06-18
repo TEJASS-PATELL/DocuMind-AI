@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import "./Chatbot.css";
 import SettingsModal from "../Components/SettingsModal";
 import api from '../api';
@@ -14,6 +14,7 @@ interface Message {
 
 const Chatbot: React.FC = () => {
     const navigate = useNavigate();
+    const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [userInput, setUserInput] = useState("");
@@ -46,21 +47,35 @@ const Chatbot: React.FC = () => {
             }
         };
         initChatbot();
+
+        return () => {
+            if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        };
     }, []);
 
     const handleNewChat = () => {
+        if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current);
+            typingIntervalRef.current = null;
+        }
         setMessages([]);
+        setDisplayedText("");
         setSessionId(`session-${Date.now()}`); 
     };
 
     const typeMessage = (fullText: string) => {
+        if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current);
+        }
+
         let index = 0;
         setDisplayedText("");
-        const interval = setInterval(() => {
+        
+        typingIntervalRef.current = setInterval(() => {
             setDisplayedText(prev => prev + fullText[index]);
             index++;
             if (index >= fullText.length) {
-                clearInterval(interval);
+                if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
                 setMessages(prev => [...prev, { role: "model", text: fullText }]);
                 setDisplayedText("");
             }
