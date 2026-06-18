@@ -7,12 +7,12 @@ const {
   ChatGoogleGenerativeAI,
 } = require("@langchain/google-genai");
 
-const pdfParseModule = require("pdf-parse");
-const pdfParse = pdfParseModule.default || pdfParseModule;
+const { PDFParse } = require("pdf-parse");
 
 const parsePdf = async (buffer) => {
   try {
-    const data = await pdfParse(buffer);
+    const parser = new PDFParse();
+    const data = await parser.parse(buffer);
     return data;
   } catch (e) {
     throw new Error("PDF parse fail: " + e.message);
@@ -38,6 +38,8 @@ const getModelAndEmbeddings = (apiKey) => {
     apiKey,
     model: "gemini-2.5-flash-lite",
     temperature: 0.3,
+    maxRetries: 3,
+    maxConcurrency: 1,
   });
 
   const embeddings = new GoogleGenerativeAIEmbeddings({
