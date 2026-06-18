@@ -1,10 +1,8 @@
 const { PineconeStore } = require("@langchain/pinecone");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
-const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
-
-const { GoogleGenAIEmbeddings, ChatGoogleGenerativeAI } = require("@langchain/google-genai");
+const { GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 
 const parsePdf = async (buffer) => {
   try {
@@ -20,6 +18,21 @@ const isGreeting = (msg) => {
   return greetings.includes(msg.toLowerCase().trim());
 };
 
+const getModelAndEmbeddings = (apiKey, language) => {
+  const model = new ChatGoogleGenerativeAI({
+    apiKey,
+    model: "gemini-2.0-flash",
+    temperature: 0.3,
+  });
+
+  const embeddings = new GoogleGenerativeAIEmbeddings({
+    apiKey,
+    model: "text-embedding-004",
+  });
+
+  return { model, embeddings };
+};
+
 exports.uploadDocument = async (req, res) => {
   try {
     const pineconeIndex = await getPineconeIndex();
@@ -28,14 +41,14 @@ exports.uploadDocument = async (req, res) => {
 
     if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
 
-    const embeddings = new GoogleGenAIEmbeddings({
-      apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
-      modelName: "text-embedding-004",
-    });
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (!apiKey) return res.status(500).json({ msg: "API key missing" });
+
+    const { embeddings } = getModelAndEmbeddings(apiKey);
 
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
-    
+
     const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
     const chunks = await splitter.splitText(pdfData.text);
 
@@ -61,29 +74,21 @@ exports.uploadDocument = async (req, res) => {
 exports.askQuestion = async (req, res) => {
   try {
     const { sessionId, message, language } = req.body;
-    const activeApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 
-    if (!activeApiKey) {
-      throw new Error("API Key configuration missing in environment variables.");
+    if (!apiKey) {
+      return res.status(500).json({ reply: "API Key configuration missing." });
     }
 
-    const model = new ChatGoogleGenerativeAI({
-      apiKey: activeApiKey,
-      model: "gemini-1.5-flash",
-      temperature: 0.3,
-    });
+    const { model, embeddings } = getModelAndEmbeddings(apiKey);
 
     if (isGreeting(message)) {
-      const prompt = `You are a helpful AI chatbot. Respond politely to the user greeting "${message}" in ${language || 'Hinglish'}.`;
+      const prompt = `You are a helpful AI chatbot. Respond politely to the user greeting "${message}" in ${language || "Hinglish"}.`;
       const result = await model.invoke(prompt);
       return res.json({ reply: result.content });
     }
 
-    const pineconeIndex = await getPineconeIndex(); 
-    const embeddings = new GoogleGenAIEmbeddings({
-      apiKey: activeApiKey,
-      modelName: "text-embedding-004",
-    });
+    const pineconeIndex = await getPineconeIndex();
 
     const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
       pineconeIndex,
@@ -93,12 +98,13 @@ exports.askQuestion = async (req, res) => {
     let context = "";
     try {
       const results = await vectorStore.similaritySearch(message, 4);
-      context = results.map(r => r.pageContent).join("\n");
+      context = results.map((r) => r.pageContent).join("\n");
     } catch (e) {
+      console.warn("Similarity search failed:", e.message);
       context = "";
     }
 
-    const prompt = `Context: ${context || "No context available."}\n\nQuestion: ${message}\nAnswer in ${language || 'Hinglish'}:`;
+    const prompt = `Context: ${context || "No context available."}\n\nQuestion: ${message}\nAnswer in ${language || "Hinglish"}:`;
     const result = await model.invoke(prompt);
 
     return res.json({ reply: result.content });
