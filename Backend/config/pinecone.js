@@ -11,7 +11,7 @@ const getPineconeClient = () => {
   return pineconeClient;
 };
 
-const getPineconeIndex = () => {
+const getPineconeIndex = async () => {
   const client = getPineconeClient();
   return client.index(process.env.PINECONE_INDEX_NAME);
 };

@@ -4,13 +4,8 @@ const { HarmBlockThreshold, HarmCategory } = require("@google/generative-ai");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 
-const getGoogleGenAIModules = async () => {
-  const mod = await import("@langchain/google-genai");
-  return {
-    GoogleGenAIEmbeddings: mod.GoogleGenAIEmbeddings || mod.default?.GoogleGenAIEmbeddings,
-    ChatGoogleGenerativeAI: mod.ChatGoogleGenerativeAI || mod.default?.ChatGoogleGenerativeAI
-  };
-};
+const { GoogleGenAIEmbeddings } = require("@langchain/google-genai/embeddings");
+const { ChatGoogleGenerativeAI } = require("@langchain/google-genai/chat_models");
 
 const parsePdf = async (buffer) => {
   try {
@@ -33,9 +28,6 @@ exports.uploadDocument = async (req, res) => {
     const { sessionId } = req.body;
 
     if (!userId || !req.file) return res.status(400).json({ msg: "Data missing" });
-
-    const { GoogleGenAIEmbeddings } = await getGoogleGenAIModules();
-    if (!GoogleGenAIEmbeddings) throw new Error("Failed to load GoogleGenAIEmbeddings module");
 
     const embeddings = new GoogleGenAIEmbeddings({
       apiKey: process.env.GEMINI_API_KEY,
@@ -70,11 +62,6 @@ exports.uploadDocument = async (req, res) => {
 exports.askQuestion = async (req, res) => {
   try {
     const { sessionId, message, language } = req.body;
-    const { GoogleGenAIEmbeddings, ChatGoogleGenerativeAI } = await getGoogleGenAIModules();
-
-    if (!ChatGoogleGenerativeAI || !GoogleGenAIEmbeddings) {
-      throw new Error("Failed to load LangChain modules");
-    }
 
     const model = new ChatGoogleGenerativeAI({
       apiKey: process.env.GEMINI_API_KEY,
