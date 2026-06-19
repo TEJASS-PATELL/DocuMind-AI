@@ -7,12 +7,29 @@ const {
   ChatGoogleGenerativeAI,
 } = require("@langchain/google-genai");
 
-const pdfParse = require("pdf-parse");
+const pdfParseModule = require("pdf-parse");
+const pdfParse = typeof pdfParseModule === "function"
+  ? pdfParseModule
+  : typeof pdfParseModule.default === "function"
+  ? pdfParseModule.default
+  : null;
 
 const parsePdf = async (buffer) => {
   try {
-    const data = await pdfParse(buffer);
-    return data;
+    if (pdfParse) {
+      return await pdfParse(buffer);
+    }
+    if (typeof pdfParseModule.PDFParse === "function") {
+      const parser = new pdfParseModule.PDFParse();
+      const data = await new Promise((resolve, reject) => {
+        parser.parse(buffer, {}, (err, data) => {
+          if (err) reject(err);
+          else resolve(data);
+        });
+      });
+      return data;
+    }
+    throw new Error("pdf-parse: no usable export found");
   } catch (e) {
     throw new Error("PDF parse fail: " + e.message);
   }
@@ -25,10 +42,7 @@ const isGreeting = (msg) => {
   ];
   const cleaned = msg.toLowerCase().trim().replace(/\s+/g, " ");
   return greetings.some(
-    (g) =>
-      cleaned === g ||
-      cleaned.startsWith(g + " ") ||
-      cleaned.endsWith(" " + g)
+    (g) => cleaned === g || cleaned.startsWith(g + " ") || cleaned.endsWith(" " + g)
   );
 };
 
@@ -40,12 +54,10 @@ const getModelAndEmbeddings = (apiKey) => {
     maxRetries: 3,
     maxConcurrency: 1,
   });
-
   const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey,
     model: "text-embedding-004",
   });
-
   return { model, embeddings };
 };
 
@@ -64,6 +76,9 @@ exports.uploadDocument = async (req, res) => {
     const { embeddings } = getModelAndEmbeddings(apiKey);
 
     const fileBuffer = fs.readFileSync(req.file.path);
+
+    console.log("pdf-parse type:", typeof pdfParseModule, "| pdfParse fn:", typeof pdfParse, "| PDFParse class:", typeof pdfParseModule.PDFParse);
+
     const pdfData = await parsePdf(fileBuffer);
 
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
@@ -78,11 +93,7 @@ exports.uploadDocument = async (req, res) => {
 
     const docs = chunks.map((chunk) => ({
       pageContent: chunk,
-      metadata: {
-        sessionId,
-        userId,
-        source: req.file.originalname,
-      },
+      metadata: { sessionId, userId, source: req.file.originalname },
     }));
 
     await PineconeStore.fromDocuments(docs, embeddings, {
@@ -104,13 +115,9 @@ exports.askQuestion = async (req, res) => {
     const { sessionId, message, language } = req.body;
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 
-    if (!apiKey) {
-      return res.status(500).json({ reply: "API Key configuration missing." });
-    }
-
-    if (!message || message.trim().length === 0) {
+    if (!apiKey) return res.status(500).json({ reply: "API Key configuration missing." });
+    if (!message || message.trim().length === 0)
       return res.status(400).json({ reply: "Message cannot be empty." });
-    }
 
     const { model, embeddings } = getModelAndEmbeddings(apiKey);
 
@@ -121,7 +128,6 @@ exports.askQuestion = async (req, res) => {
     }
 
     const pineconeIndex = await getPineconeIndex();
-
     const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
       pineconeIndex,
       namespace: sessionId,
@@ -133,12 +139,10 @@ exports.askQuestion = async (req, res) => {
       context = results.map((r) => r.pageContent).join("\n");
     } catch (e) {
       console.warn("Similarity search failed:", e.message);
-      context = "";
     }
 
     const prompt = `Context: ${context || "No context available."}\n\nQuestion: ${message}\nAnswer in ${language || "Hinglish"}:`;
     const result = await model.invoke(prompt);
-
     return res.json({ reply: result.content });
   } catch (error) {
     console.error("Chat Error:", error);
