@@ -8,6 +8,7 @@ const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfPars
 
 const EMBEDDING_MODEL = "gemini-embedding-001";
 const EMBEDDING_DIM = 768;
+const processingSessions = new Set();
 
 const parsePdf = async (buffer) => {
   try {
@@ -143,6 +144,14 @@ const embedSingleText = async (apiKey, text, retries = 3) => {
 };
 
 exports.uploadDocument = async (req, res) => {
+  const lockKey = String(req.body?.sessionId || "default-session");
+
+  if (processingSessions.has(lockKey)) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(409).json({ msg: "Ek document pehle se process ho raha hai, thoda ruko." });
+  }
+  processingSessions.add(lockKey);
+
   try {
     const pineconeIndex = await getPineconeIndex();
     const userId = req.user?.userid;
@@ -165,8 +174,8 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 1000,
-      chunkOverlap: 200,
+      chunkSize: 2500,
+      chunkOverlap: 250,
     });
 
     const safeMetadata = {
@@ -187,7 +196,7 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    const vectorsArray = await embedInBatches(apiKey, texts, 50);
+    const vectorsArray = await embedInBatches(apiKey, texts, 90);
 
     if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
@@ -213,9 +222,12 @@ exports.uploadDocument = async (req, res) => {
       throw new Error("Pinecone ke liye 0 valid records bache hain.");
     }
 
+    console.log(`Chunks: ${validDocs.length}, Embedded: ${vectorsArray.length}, ToUpsert: ${vectorsToUpsert.length}`);
+
     const BATCH_SIZE = 100;
     for (let i = 0; i < vectorsToUpsert.length; i += BATCH_SIZE) {
       const batch = vectorsToUpsert.slice(i, i + BATCH_SIZE);
+      if (batch.length === 0) continue;
       await pineconeIndex
         .namespace(String(sessionId || "default-session"))
         .upsert(batch);
@@ -227,6 +239,8 @@ exports.uploadDocument = async (req, res) => {
     console.error("Upload Error:", error);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     return res.status(500).json({ msg: "Connection failed", error: error.message });
+  } finally {
+    processingSessions.delete(lockKey);
   }
 };
 
