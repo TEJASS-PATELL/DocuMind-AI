@@ -56,6 +56,7 @@ const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
     requests: batchTexts.map((text) => ({
       model: `models/${EMBEDDING_MODEL}`,
       content: { parts: [{ text }] },
+      taskType: "RETRIEVAL_DOCUMENT"
     })),
   };
 
@@ -68,7 +69,11 @@ const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
 
     if (response.ok) {
       const data = await response.json();
-      return (data.embeddings || []).map((e) => e.values || []);
+      if (!data.embeddings || data.embeddings.length === 0) {
+        console.error("Gemini API Empty Response:", JSON.stringify(data));
+        throw new Error("Gemini ne 200 OK diya par embeddings nahi bheje.");
+      }
+      return data.embeddings.map((e) => e.values || []);
     }
 
     const errorText = await response.text();
@@ -85,14 +90,14 @@ const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
   throw new Error("Embedding API failed after retries.");
 };
 
-const embedInBatches = async (apiKey, texts, batchSize = 50) => {
+const embedInBatches = async (apiKey, texts, batchSize = 20) => {
   const allVectors = [];
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
     const vectors = await embedBatchWithRetry(apiKey, batch);
     allVectors.push(...vectors);
     if (i + batchSize < texts.length) {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
   return allVectors;
@@ -120,6 +125,8 @@ exports.uploadDocument = async (req, res) => {
       throw new Error("PDF parse hui, par text nahi mila.");
     }
 
+    const cleanedText = pdfData.text.replace(/\x00/g, "").replace(/\s+/g, " ").trim();
+
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
       chunkOverlap: 200,
@@ -132,7 +139,7 @@ exports.uploadDocument = async (req, res) => {
     };
 
     const docs = await splitter.createDocuments(
-      [pdfData.text],
+      [cleanedText],
       [safeMetadata]
     );
 
@@ -143,7 +150,7 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    const vectorsArray = await embedInBatches(apiKey, texts, 50);
+    const vectorsArray = await embedInBatches(apiKey, texts, 20);
 
     if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
@@ -166,7 +173,7 @@ exports.uploadDocument = async (req, res) => {
       throw new Error("Pinecone ke liye 0 valid records bache hain.");
     }
 
-    const BATCH_SIZE = 100;
+    const BATCH_SIZE = 50;
     for (let i = 0; i < vectorsToUpsert.length; i += BATCH_SIZE) {
       const batch = vectorsToUpsert.slice(i, i + BATCH_SIZE);
       await pineconeIndex
