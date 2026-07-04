@@ -6,30 +6,12 @@ const {
   GoogleGenerativeAIEmbeddings,
   ChatGoogleGenerativeAI,
 } = require("@langchain/google-genai");
-
-const pdfParseModule = require("pdf-parse");
-const pdfParse = typeof pdfParseModule === "function"
-  ? pdfParseModule
-  : typeof pdfParseModule.default === "function"
-  ? pdfParseModule.default
-  : null;
+const pdfParse = require("pdf-parse");
 
 const parsePdf = async (buffer) => {
   try {
-    if (pdfParse) {
-      return await pdfParse(buffer);
-    }
-    if (typeof pdfParseModule.PDFParse === "function") {
-      const parser = new pdfParseModule.PDFParse();
-      const data = await new Promise((resolve, reject) => {
-        parser.parse(buffer, {}, (err, data) => {
-          if (err) reject(err);
-          else resolve(data);
-        });
-      });
-      return data;
-    }
-    throw new Error("pdf-parse: no usable export found");
+    const data = await pdfParse(buffer);
+    return data;
   } catch (e) {
     throw new Error("PDF parse fail: " + e.message);
   }
@@ -67,18 +49,17 @@ exports.uploadDocument = async (req, res) => {
     const userId = req.user?.userid;
     const { sessionId } = req.body;
 
-    if (!userId || !req.file)
+    if (!userId || !req.file) {
       return res.status(400).json({ msg: "Data missing" });
+    }
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-    if (!apiKey) return res.status(500).json({ msg: "API key missing" });
+    if (!apiKey) {
+      return res.status(500).json({ msg: "API key missing" });
+    }
 
     const { embeddings } = getModelAndEmbeddings(apiKey);
-
     const fileBuffer = fs.readFileSync(req.file.path);
-
-    console.log("pdf-parse type:", typeof pdfParseModule, "| pdfParse fn:", typeof pdfParse, "| PDFParse class:", typeof pdfParseModule.PDFParse);
-
     const pdfData = await parsePdf(fileBuffer);
 
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
@@ -115,9 +96,12 @@ exports.askQuestion = async (req, res) => {
     const { sessionId, message, language } = req.body;
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 
-    if (!apiKey) return res.status(500).json({ reply: "API Key configuration missing." });
-    if (!message || message.trim().length === 0)
+    if (!apiKey) {
+      return res.status(500).json({ reply: "API Key configuration missing." });
+    }
+    if (!message || message.trim().length === 0) {
       return res.status(400).json({ reply: "Message cannot be empty." });
+    }
 
     const { model, embeddings } = getModelAndEmbeddings(apiKey);
 
