@@ -68,7 +68,7 @@ exports.uploadDocument = async (req, res) => {
     const pdfData = await parsePdf(fileBuffer);
 
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
-      throw new Error("PDF parse hui, par text nahi mila. Scanned PDF ho sakti hai.");
+      throw new Error("PDF parse hui, par text nahi mila.");
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
@@ -79,7 +79,7 @@ exports.uploadDocument = async (req, res) => {
     const safeMetadata = {
       sessionId: String(sessionId || "default-session"),
       userId: String(userId || "unknown-user"),
-      source: String(req.file.originalname || "unknown-file")
+      source: String(req.file.originalname || "unknown-file"),
     };
 
     const docs = await splitter.createDocuments(
@@ -91,14 +91,22 @@ exports.uploadDocument = async (req, res) => {
       throw new Error("Text chunks empty hain.");
     }
 
-    const ids = docs.map((_, i) => `doc-${Date.now()}-${i}`);
+    const texts = docs.map((doc) => doc.pageContent);
+    const vectorsArray = await embeddings.embedDocuments(texts);
 
-    const vectorStore = new PineconeStore(embeddings, {
-      pineconeIndex,
-      namespace: String(sessionId || "default-session"),
-    });
+    if (!vectorsArray || vectorsArray.length === 0 || vectorsArray.length !== docs.length) {
+      throw new Error("Google API se embeddings generate nahi ho paye.");
+    }
 
-    await vectorStore.addDocuments(docs, { ids: ids });
+    const vectorsToUpsert = docs.map((doc, i) => ({
+      id: `vec_${Date.now()}_${i}`,
+      values: vectorsArray[i],
+      metadata: doc.metadata,
+    }));
+
+    await pineconeIndex
+      .namespace(String(sessionId || "default-session"))
+      .upsert(vectorsToUpsert);
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     return res.status(200).json({ msg: "Success" });
