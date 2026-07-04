@@ -11,13 +11,17 @@ const cookieOptions = {
 
 exports.signup = async (req, res) => {
   const { name, email, password } = req.body;
-  if (!name || !email || !password)
+  
+  if (!name || !email || !password) {
     return res.status(400).json({ msg: "All fields are required" });
+  }
 
   try {
     const [existingUsers] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
-    if (existingUsers.length > 0)
+    
+    if (existingUsers.length > 0) {
       return res.status(400).json({ msg: "User already exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -27,8 +31,13 @@ exports.signup = async (req, res) => {
     );
 
     const token = jwt.sign({ userid: result.insertId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    
     res.cookie("token", token, cookieOptions);
-    res.status(201).json({ msg: "User Created", userId: result.insertId });
+    res.status(201).json({ 
+      msg: "User Created", 
+      userId: result.insertId,
+      token: token 
+    });
   } catch (err) {
     res.status(500).json({ msg: "Signup failed", error: err.message });
   }
@@ -36,21 +45,31 @@ exports.signup = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ msg: "Email and password are required" });
+  
+  if (!email || !password) {
+    return res.status(400).json({ msg: "Email and password are required" });
+  }
 
   try {
     const [results] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
-    if (results.length === 0) return res.status(400).json({ msg: "User does not exist" });
+    
+    if (results.length === 0) {
+      return res.status(400).json({ msg: "User does not exist" });
+    }
 
     const user = results[0];
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
+    
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
     const token = jwt.sign({ userid: user.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    
     res.cookie("token", token, cookieOptions);
-
     res.json({
       msg: "Logged in successfully",
+      token: token,
       user: { id: user.id, name: user.name, email: user.email },
     });
   } catch (err) {

@@ -24,7 +24,7 @@ app.use(helmetConfig);
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://brain-body-ai.vercel.app"],
+    origin: ["http://localhost:5173", "https://docu-mind-ai-kohl.vercel.app"],
     credentials: true,
   })
 );

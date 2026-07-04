@@ -17,7 +17,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   return (
     <header className="chat-header">
       <div className="chat-header-left">
-        <button className="header-logo-btn" onClick={handleNewChat} title="Back to home">
+        <button className="header-logo-btn" onClick={handleNewChat} title="New Chat">
           <img src="/DocuMind.png" alt="DocuMind" className="header-logo" />
         </button>
       </div>

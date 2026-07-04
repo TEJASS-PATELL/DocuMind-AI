@@ -122,7 +122,9 @@ const Chatbot: React.FC = () => {
             const { data } = await api.post("/api/chats/startChat", { 
                 message: text, 
                 sessionId,
-                ...settings
+                language: settings.language,
+                focusMode: settings.focusMode,
+                replyType: settings.replyType
             });
             typeMessage(data?.reply || "No response.");
         } catch {
