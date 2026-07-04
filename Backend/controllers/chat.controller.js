@@ -7,7 +7,7 @@ const {
   ChatGoogleGenerativeAI,
 } = require("@langchain/google-genai");
 
-const pdfParseModule = require("pdf-parse-new"); 
+const pdfParseModule = require("pdf-parse-new");
 const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfParseModule.default;
 
 const parsePdf = async (buffer) => {
@@ -46,6 +46,34 @@ const getModelAndEmbeddings = (apiKey) => {
     model: "text-embedding-004",
   });
   return { model, embeddings };
+};
+
+const normalizeVector = (vec) => {
+  if (Array.isArray(vec)) return vec;
+  if (vec && Array.isArray(vec.values)) return vec.values;
+  if (vec && Array.isArray(vec.embedding)) return vec.embedding;
+  return null;
+};
+
+const embedInBatches = async (embeddings, texts, batchSize = 10) => {
+  const allVectors = [];
+  for (let i = 0; i < texts.length; i += batchSize) {
+    const batch = texts.slice(i, i + batchSize);
+    let batchResult;
+    try {
+      batchResult = await embeddings.embedDocuments(batch);
+    } catch (e) {
+      console.error(`Embedding batch failed at index ${i}:`, e.message);
+      batchResult = batch.map(() => null);
+    }
+    for (const item of batchResult || []) {
+      allVectors.push(normalizeVector(item));
+    }
+    if (i + batchSize < texts.length) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
+  return allVectors;
 };
 
 exports.uploadDocument = async (req, res) => {
@@ -94,18 +122,14 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    let vectorsArray = await embeddings.embedDocuments(texts);
+    const vectorsArray = await embedInBatches(embeddings, texts, 10);
 
     if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
     }
 
-    if (typeof vectorsArray[0] === "number") {
-      vectorsArray = [vectorsArray];
-    }
-
     const vectorsToUpsert = [];
-    
+
     for (let i = 0; i < validDocs.length; i++) {
       const vec = vectorsArray[i];
       if (vec && Array.isArray(vec) && vec.length > 0) {
@@ -118,16 +142,19 @@ exports.uploadDocument = async (req, res) => {
     }
 
     if (vectorsToUpsert.length === 0) {
-      console.error("Vectors Data Received:", JSON.stringify(vectorsArray).substring(0, 300));
       throw new Error("Pinecone ke liye 0 valid records bache hain.");
     }
 
-    await pineconeIndex
-      .namespace(String(sessionId || "default-session"))
-      .upsert(vectorsToUpsert);
+    const BATCH_SIZE = 100;
+    for (let i = 0; i < vectorsToUpsert.length; i += BATCH_SIZE) {
+      const batch = vectorsToUpsert.slice(i, i + BATCH_SIZE);
+      await pineconeIndex
+        .namespace(String(sessionId || "default-session"))
+        .upsert(batch);
+    }
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(200).json({ msg: "Success" });
+    return res.status(200).json({ msg: "Success", chunksUploaded: vectorsToUpsert.length });
   } catch (error) {
     console.error("Upload Error:", error);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
