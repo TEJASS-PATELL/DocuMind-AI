@@ -67,13 +67,8 @@ exports.uploadDocument = async (req, res) => {
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
 
-    console.log("--- DEBUG INFO ---");
-    console.log("PDF Pages:", pdfData?.numpages);
-    console.log("Extracted Text Length:", pdfData?.text?.length);
-    console.log("------------------");
-
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
-      throw new Error("PDF parse toh hui, lekin text nahi mila. Kripya check karein ki ye ek scanned (image-based) PDF toh nahi hai.");
+      throw new Error("PDF parse hui, par text nahi mila. Scanned PDF ho sakti hai.");
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
@@ -93,15 +88,17 @@ exports.uploadDocument = async (req, res) => {
     );
 
     if (!docs || docs.length === 0) {
-      throw new Error("Text chunks empty hain. Pinecone ko data bheja nahi ja sakta.");
+      throw new Error("Text chunks empty hain.");
     }
 
-    console.log(`Total documents created for Pinecone: ${docs.length}`);
+    const ids = docs.map((_, i) => `doc-${Date.now()}-${i}`);
 
-    await PineconeStore.fromDocuments(docs, embeddings, {
+    const vectorStore = new PineconeStore(embeddings, {
       pineconeIndex,
       namespace: String(sessionId || "default-session"),
     });
+
+    await vectorStore.addDocuments(docs, { ids: ids });
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     return res.status(200).json({ msg: "Success" });
