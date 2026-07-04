@@ -1,14 +1,13 @@
-const { PineconeStore } = require("@langchain/pinecone");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
-const {
-  GoogleGenerativeAIEmbeddings,
-  ChatGoogleGenerativeAI,
-} = require("@langchain/google-genai");
+const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 
 const pdfParseModule = require("pdf-parse-new");
 const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfParseModule.default;
+
+const EMBEDDING_MODEL = "gemini-embedding-001";
+const EMBEDDING_DIM = 768;
 
 const parsePdf = async (buffer) => {
   try {
@@ -33,19 +32,97 @@ const isGreeting = (msg) => {
   );
 };
 
-const getModelAndEmbeddings = (apiKey) => {
-  const model = new ChatGoogleGenerativeAI({
+const getModel = (apiKey) => {
+  return new ChatGoogleGenerativeAI({
     apiKey,
     model: "gemini-2.5-flash-lite",
     temperature: 0.3,
     maxRetries: 3,
     maxConcurrency: 1,
   });
-  const embeddings = new GoogleGenerativeAIEmbeddings({
-    apiKey,
-    model: "text-embedding-004",
-  });
-  return { model, embeddings };
+};
+
+const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:batchEmbedContents?key=${apiKey}`;
+  const body = {
+    requests: batchTexts.map((text) => ({
+      model: `models/${EMBEDDING_MODEL}`,
+      content: { parts: [{ text }] },
+      outputDimensionality: EMBEDDING_DIM,
+    })),
+  };
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return (data.embeddings || []).map((e) => e.values || []);
+    }
+
+    const errorText = await response.text();
+
+    if ((response.status === 429 || response.status === 503) && attempt < retries) {
+      const delay = 1000 * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      continue;
+    }
+
+    throw new Error(`Embedding API error (status ${response.status}): ${errorText}`);
+  }
+
+  throw new Error("Embedding API failed after retries.");
+};
+
+const embedInBatches = async (apiKey, texts, batchSize = 50) => {
+  const allVectors = [];
+  for (let i = 0; i < texts.length; i += batchSize) {
+    const batch = texts.slice(i, i + batchSize);
+    const vectors = await embedBatchWithRetry(apiKey, batch);
+    allVectors.push(...vectors);
+    if (i + batchSize < texts.length) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+  return allVectors;
+};
+
+const embedSingleText = async (apiKey, text, retries = 3) => {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`;
+  const body = {
+    model: `models/${EMBEDDING_MODEL}`,
+    content: { parts: [{ text }] },
+    outputDimensionality: EMBEDDING_DIM,
+  };
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.embedding?.values || [];
+    }
+
+    const errorText = await response.text();
+
+    if ((response.status === 429 || response.status === 503) && attempt < retries) {
+      const delay = 1000 * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      continue;
+    }
+
+    throw new Error(`Embedding API error (status ${response.status}): ${errorText}`);
+  }
+
+  throw new Error("Embedding API failed after retries.");
 };
 
 exports.uploadDocument = async (req, res) => {
@@ -63,15 +140,12 @@ exports.uploadDocument = async (req, res) => {
       return res.status(500).json({ msg: "API key missing" });
     }
 
-    const { embeddings } = getModelAndEmbeddings(apiKey);
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
 
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
       throw new Error("PDF parse hui, par text nahi mila.");
     }
-
-    const cleanedText = pdfData.text.replace(/\x00/g, "").replace(/\s+/g, " ").trim();
 
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
@@ -85,7 +159,7 @@ exports.uploadDocument = async (req, res) => {
     };
 
     const docs = await splitter.createDocuments(
-      [cleanedText],
+      [pdfData.text],
       [safeMetadata]
     );
 
@@ -96,14 +170,10 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    let vectorsArray = await embeddings.embedDocuments(texts);
+    const vectorsArray = await embedInBatches(apiKey, texts, 50);
 
     if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
-    }
-
-    if (typeof vectorsArray[0] === "number") {
-      vectorsArray = [vectorsArray];
     }
 
     const vectorsToUpsert = [];
@@ -114,7 +184,10 @@ exports.uploadDocument = async (req, res) => {
         vectorsToUpsert.push({
           id: `vec_${Date.now()}_${i}`,
           values: vec,
-          metadata: validDocs[i].metadata,
+          metadata: {
+            ...validDocs[i].metadata,
+            text: validDocs[i].pageContent,
+          },
         });
       }
     }
@@ -123,7 +196,7 @@ exports.uploadDocument = async (req, res) => {
       throw new Error("Pinecone ke liye 0 valid records bache hain.");
     }
 
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = 100;
     for (let i = 0; i < vectorsToUpsert.length; i += BATCH_SIZE) {
       const batch = vectorsToUpsert.slice(i, i + BATCH_SIZE);
       await pineconeIndex
@@ -152,7 +225,7 @@ exports.askQuestion = async (req, res) => {
       return res.status(400).json({ reply: "Message cannot be empty." });
     }
 
-    const { model, embeddings } = getModelAndEmbeddings(apiKey);
+    const model = getModel(apiKey);
 
     if (isGreeting(message)) {
       const prompt = `You are a helpful AI chatbot. Respond politely to the user greeting "${message}" in ${language || "Hinglish"}.`;
@@ -160,16 +233,23 @@ exports.askQuestion = async (req, res) => {
       return res.json({ reply: result.content });
     }
 
-    const pineconeIndex = await getPineconeIndex();
-    const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
-      pineconeIndex,
-      namespace: sessionId,
-    });
-
     let context = "";
     try {
-      const results = await vectorStore.similaritySearch(message, 4);
-      context = results.map((r) => r.pageContent).join("\n");
+      const pineconeIndex = await getPineconeIndex();
+      const queryVector = await embedSingleText(apiKey, message);
+
+      const searchResult = await pineconeIndex
+        .namespace(String(sessionId || "default-session"))
+        .query({
+          vector: queryVector,
+          topK: 4,
+          includeMetadata: true,
+        });
+
+      context = (searchResult.matches || [])
+        .map((match) => match.metadata?.text || "")
+        .filter(Boolean)
+        .join("\n");
     } catch (e) {
       console.warn("Similarity search failed:", e.message);
     }
