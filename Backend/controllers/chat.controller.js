@@ -6,10 +6,15 @@ const {
   GoogleGenerativeAIEmbeddings,
   ChatGoogleGenerativeAI,
 } = require("@langchain/google-genai");
-const pdfParse = require("pdf-parse");
+
+const pdfParseModule = require("pdf-parse-new"); 
+const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfParseModule.default;
 
 const parsePdf = async (buffer) => {
   try {
+    if (typeof pdfParse !== "function") {
+      throw new Error("Cannot find valid pdfParse function in module.");
+    }
     const data = await pdfParse(buffer);
     return data;
   } catch (e) {
