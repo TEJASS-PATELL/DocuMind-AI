@@ -94,25 +94,31 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    const vectorsArray = await embeddings.embedDocuments(texts);
+    let vectorsArray = await embeddings.embedDocuments(texts);
 
     if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
     }
 
+    if (typeof vectorsArray[0] === "number") {
+      vectorsArray = [vectorsArray];
+    }
+
     const vectorsToUpsert = [];
     
     for (let i = 0; i < validDocs.length; i++) {
-      if (vectorsArray[i] && vectorsArray[i].length > 0) {
+      const vec = vectorsArray[i];
+      if (vec && Array.isArray(vec) && vec.length > 0) {
         vectorsToUpsert.push({
           id: `vec_${Date.now()}_${i}`,
-          values: vectorsArray[i],
+          values: vec,
           metadata: validDocs[i].metadata,
         });
       }
     }
 
     if (vectorsToUpsert.length === 0) {
+      console.error("Vectors Data Received:", JSON.stringify(vectorsArray).substring(0, 300));
       throw new Error("Pinecone ke liye 0 valid records bache hain.");
     }
 
