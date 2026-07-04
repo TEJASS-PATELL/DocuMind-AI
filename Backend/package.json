@@ -15,9 +15,10 @@
   "dependencies": {
     "@google/genai": "^1.33.0",
     "@google/generative-ai": "^0.24.1",
-    "@langchain/community": "^1.1.28",
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.2.1",
     "@langchain/google-genai": "^2.1.30",
-    "@langchain/pinecone": "^1.0.2",
+    "@langchain/pinecone": "^1.0.3",
     "@pinecone-database/pinecone": "^7.2.0",
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
