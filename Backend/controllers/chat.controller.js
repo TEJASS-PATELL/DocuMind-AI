@@ -70,7 +70,6 @@ exports.uploadDocument = async (req, res) => {
     console.log("--- DEBUG INFO ---");
     console.log("PDF Pages:", pdfData?.numpages);
     console.log("Extracted Text Length:", pdfData?.text?.length);
-    console.log("Sample Text:", pdfData?.text?.substring(0, 100)); 
     console.log("------------------");
 
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
@@ -81,22 +80,27 @@ exports.uploadDocument = async (req, res) => {
       chunkSize: 1000,
       chunkOverlap: 200,
     });
-    const chunks = await splitter.splitText(pdfData.text);
 
-    if (!chunks || chunks.length === 0) {
+    const safeMetadata = {
+      sessionId: String(sessionId || "default-session"),
+      userId: String(userId || "unknown-user"),
+      source: String(req.file.originalname || "unknown-file")
+    };
+
+    const docs = await splitter.createDocuments(
+      [pdfData.text],
+      [safeMetadata]
+    );
+
+    if (!docs || docs.length === 0) {
       throw new Error("Text chunks empty hain. Pinecone ko data bheja nahi ja sakta.");
     }
 
-    console.log(`Total chunks created: ${chunks.length}`);
-
-    const docs = chunks.map((chunk) => ({
-      pageContent: chunk,
-      metadata: { sessionId, userId, source: req.file.originalname },
-    }));
+    console.log(`Total documents created for Pinecone: ${docs.length}`);
 
     await PineconeStore.fromDocuments(docs, embeddings, {
       pineconeIndex,
-      namespace: sessionId,
+      namespace: String(sessionId || "default-session"),
     });
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
