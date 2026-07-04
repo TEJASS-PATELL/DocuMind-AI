@@ -67,8 +67,14 @@ exports.uploadDocument = async (req, res) => {
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
 
+    console.log("--- DEBUG INFO ---");
+    console.log("PDF Pages:", pdfData?.numpages);
+    console.log("Extracted Text Length:", pdfData?.text?.length);
+    console.log("Sample Text:", pdfData?.text?.substring(0, 100)); 
+    console.log("------------------");
+
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
-      throw new Error("PDF has no readable text.");
+      throw new Error("PDF parse toh hui, lekin text nahi mila. Kripya check karein ki ye ek scanned (image-based) PDF toh nahi hai.");
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
@@ -76,6 +82,12 @@ exports.uploadDocument = async (req, res) => {
       chunkOverlap: 200,
     });
     const chunks = await splitter.splitText(pdfData.text);
+
+    if (!chunks || chunks.length === 0) {
+      throw new Error("Text chunks empty hain. Pinecone ko data bheja nahi ja sakta.");
+    }
+
+    console.log(`Total chunks created: ${chunks.length}`);
 
     const docs = chunks.map((chunk) => ({
       pageContent: chunk,
