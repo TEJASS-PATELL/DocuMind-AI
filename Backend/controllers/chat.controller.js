@@ -42,7 +42,23 @@ const getModel = (apiKey) => {
   });
 };
 
-const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
+const parseRetryDelayMs = (errorText, fallbackMs) => {
+  try {
+    const parsed = JSON.parse(errorText);
+    const details = parsed?.error?.details || [];
+    const retryInfo = details.find((d) => d["@type"]?.includes("RetryInfo"));
+    const raw = retryInfo?.retryDelay;
+    if (raw) {
+      const seconds = parseFloat(String(raw).replace("s", ""));
+      if (!isNaN(seconds)) return Math.ceil(seconds * 1000) + 2000;
+    }
+  } catch (e) {
+    return fallbackMs;
+  }
+  return fallbackMs;
+};
+
+const embedBatchWithRetry = async (apiKey, batchTexts, retries = 5) => {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:batchEmbedContents?key=${apiKey}`;
   const body = {
     requests: batchTexts.map((text) => ({
@@ -67,7 +83,8 @@ const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
     const errorText = await response.text();
 
     if ((response.status === 429 || response.status === 503) && attempt < retries) {
-      const delay = 1000 * Math.pow(2, attempt);
+      const fallbackDelay = 3000 * Math.pow(2, attempt);
+      const delay = response.status === 429 ? parseRetryDelayMs(errorText, fallbackDelay) : fallbackDelay;
       await new Promise((resolve) => setTimeout(resolve, delay));
       continue;
     }
@@ -78,14 +95,14 @@ const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
   throw new Error("Embedding API failed after retries.");
 };
 
-const embedInBatches = async (apiKey, texts, batchSize = 50) => {
+const embedInBatches = async (apiKey, texts, batchSize = 80) => {
   const allVectors = [];
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
     const vectors = await embedBatchWithRetry(apiKey, batch);
     allVectors.push(...vectors);
     if (i + batchSize < texts.length) {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 65000));
     }
   }
   return allVectors;
