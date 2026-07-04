@@ -10,6 +10,8 @@ const {
 const pdfParseModule = require("pdf-parse-new");
 const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfParseModule.default;
 
+const EMBEDDING_MODEL = "text-embedding-004";
+
 const parsePdf = async (buffer) => {
   try {
     if (typeof pdfParse !== "function") {
@@ -43,34 +45,54 @@ const getModelAndEmbeddings = (apiKey) => {
   });
   const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey,
-    model: "text-embedding-004",
+    model: EMBEDDING_MODEL,
   });
   return { model, embeddings };
 };
 
-const normalizeVector = (vec) => {
-  if (Array.isArray(vec)) return vec;
-  if (vec && Array.isArray(vec.values)) return vec.values;
-  if (vec && Array.isArray(vec.embedding)) return vec.embedding;
-  return null;
+const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:batchEmbedContents?key=${apiKey}`;
+  const body = {
+    requests: batchTexts.map((text) => ({
+      model: `models/${EMBEDDING_MODEL}`,
+      content: { parts: [{ text }] },
+    })),
+  };
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return (data.embeddings || []).map((e) => e.values || []);
+    }
+
+    const errorText = await response.text();
+
+    if ((response.status === 429 || response.status === 503) && attempt < retries) {
+      const delay = 1000 * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      continue;
+    }
+
+    throw new Error(`Embedding API error (status ${response.status}): ${errorText}`);
+  }
+
+  throw new Error("Embedding API failed after retries.");
 };
 
-const embedInBatches = async (embeddings, texts, batchSize = 10) => {
+const embedInBatches = async (apiKey, texts, batchSize = 50) => {
   const allVectors = [];
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
-    let batchResult;
-    try {
-      batchResult = await embeddings.embedDocuments(batch);
-    } catch (e) {
-      console.error(`Embedding batch failed at index ${i}:`, e.message);
-      batchResult = batch.map(() => null);
-    }
-    for (const item of batchResult || []) {
-      allVectors.push(normalizeVector(item));
-    }
+    const vectors = await embedBatchWithRetry(apiKey, batch);
+    allVectors.push(...vectors);
     if (i + batchSize < texts.length) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }
   return allVectors;
@@ -91,7 +113,6 @@ exports.uploadDocument = async (req, res) => {
       return res.status(500).json({ msg: "API key missing" });
     }
 
-    const { embeddings } = getModelAndEmbeddings(apiKey);
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
 
@@ -122,7 +143,7 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    const vectorsArray = await embedInBatches(embeddings, texts, 10);
+    const vectorsArray = await embedInBatches(apiKey, texts, 50);
 
     if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
@@ -132,7 +153,7 @@ exports.uploadDocument = async (req, res) => {
 
     for (let i = 0; i < validDocs.length; i++) {
       const vec = vectorsArray[i];
-      if (vec && Array.isArray(vec) && vec.length > 0) {
+      if (Array.isArray(vec) && vec.length > 0) {
         vectorsToUpsert.push({
           id: `vec_${Date.now()}_${i}`,
           values: vec,
