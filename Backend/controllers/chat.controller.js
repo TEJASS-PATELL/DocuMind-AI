@@ -87,22 +87,34 @@ exports.uploadDocument = async (req, res) => {
       [safeMetadata]
     );
 
-    if (!docs || docs.length === 0) {
-      throw new Error("Text chunks empty hain.");
+    const validDocs = docs.filter(doc => doc.pageContent && doc.pageContent.trim().length > 0);
+
+    if (validDocs.length === 0) {
+      throw new Error("PDF me koi valid text chunks nahi bane.");
     }
 
-    const texts = docs.map((doc) => doc.pageContent);
+    const texts = validDocs.map((doc) => doc.pageContent);
     const vectorsArray = await embeddings.embedDocuments(texts);
 
-    if (!vectorsArray || vectorsArray.length === 0 || vectorsArray.length !== docs.length) {
+    if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
     }
 
-    const vectorsToUpsert = docs.map((doc, i) => ({
-      id: `vec_${Date.now()}_${i}`,
-      values: vectorsArray[i],
-      metadata: doc.metadata,
-    }));
+    const vectorsToUpsert = [];
+    
+    for (let i = 0; i < validDocs.length; i++) {
+      if (vectorsArray[i] && vectorsArray[i].length > 0) {
+        vectorsToUpsert.push({
+          id: `vec_${Date.now()}_${i}`,
+          values: vectorsArray[i],
+          metadata: validDocs[i].metadata,
+        });
+      }
+    }
+
+    if (vectorsToUpsert.length === 0) {
+      throw new Error("Pinecone ke liye 0 valid records bache hain.");
+    }
 
     await pineconeIndex
       .namespace(String(sessionId || "default-session"))
