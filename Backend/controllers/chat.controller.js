@@ -10,8 +10,6 @@ const {
 const pdfParseModule = require("pdf-parse-new");
 const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfParseModule.default;
 
-const EMBEDDING_MODEL = "text-embedding-004";
-
 const parsePdf = async (buffer) => {
   try {
     if (typeof pdfParse !== "function") {
@@ -45,62 +43,9 @@ const getModelAndEmbeddings = (apiKey) => {
   });
   const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey,
-    model: EMBEDDING_MODEL,
+    model: "text-embedding-004",
   });
   return { model, embeddings };
-};
-
-const embedBatchWithRetry = async (apiKey, batchTexts, retries = 3) => {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:batchEmbedContents?key=${apiKey}`;
-  const body = {
-    requests: batchTexts.map((text) => ({
-      model: `models/${EMBEDDING_MODEL}`,
-      content: { parts: [{ text }] },
-      taskType: "RETRIEVAL_DOCUMENT"
-    })),
-  };
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (!data.embeddings || data.embeddings.length === 0) {
-        console.error("Gemini API Empty Response:", JSON.stringify(data));
-        throw new Error("Gemini ne 200 OK diya par embeddings nahi bheje.");
-      }
-      return data.embeddings.map((e) => e.values || []);
-    }
-
-    const errorText = await response.text();
-
-    if ((response.status === 429 || response.status === 503) && attempt < retries) {
-      const delay = 1000 * Math.pow(2, attempt);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      continue;
-    }
-
-    throw new Error(`Embedding API error (status ${response.status}): ${errorText}`);
-  }
-
-  throw new Error("Embedding API failed after retries.");
-};
-
-const embedInBatches = async (apiKey, texts, batchSize = 20) => {
-  const allVectors = [];
-  for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize);
-    const vectors = await embedBatchWithRetry(apiKey, batch);
-    allVectors.push(...vectors);
-    if (i + batchSize < texts.length) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-  }
-  return allVectors;
 };
 
 exports.uploadDocument = async (req, res) => {
@@ -118,6 +63,7 @@ exports.uploadDocument = async (req, res) => {
       return res.status(500).json({ msg: "API key missing" });
     }
 
+    const { embeddings } = getModelAndEmbeddings(apiKey);
     const fileBuffer = fs.readFileSync(req.file.path);
     const pdfData = await parsePdf(fileBuffer);
 
@@ -150,10 +96,14 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    const vectorsArray = await embedInBatches(apiKey, texts, 20);
+    let vectorsArray = await embeddings.embedDocuments(texts);
 
     if (!vectorsArray || vectorsArray.length === 0) {
       throw new Error("Google API se embeddings generate nahi ho paye.");
+    }
+
+    if (typeof vectorsArray[0] === "number") {
+      vectorsArray = [vectorsArray];
     }
 
     const vectorsToUpsert = [];
