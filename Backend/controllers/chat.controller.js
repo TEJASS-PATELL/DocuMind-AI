@@ -211,7 +211,9 @@ exports.uploadDocument = async (req, res) => {
           id: `vec_${Date.now()}_${i}`,
           values: vec,
           metadata: {
-            ...validDocs[i].metadata,
+            sessionId: safeMetadata.sessionId,
+            userId: safeMetadata.userId,
+            source: safeMetadata.source,
             text: validDocs[i].pageContent,
           },
         });
