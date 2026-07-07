@@ -85,14 +85,14 @@ const embedBatchWithRetry = async (apiKey, batchTexts, retries = 5) => {
   throw new Error("Embedding API failed after retries.");
 };
 
-const embedInBatches = async (apiKey, texts, batchSize = 80) => {
+const embedInBatches = async (apiKey, texts, batchSize = 20) => {
   const allVectors = [];
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
     const vectors = await embedBatchWithRetry(apiKey, batch);
     allVectors.push(...vectors);
     if (i + batchSize < texts.length) {
-      await new Promise((resolve) => setTimeout(resolve, 65000));
+      await new Promise((resolve) => setTimeout(resolve, 61000));
     }
   }
   return allVectors;
@@ -137,7 +137,7 @@ exports.uploadDocument = async (req, res) => {
 
   if (processingSessions.has(lockKey)) {
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    return res.status(409).json({ msg: "Ek document pehle se process ho raha hai, thoda ruko." });
+    return res.status(409).json({ msg: "A document is already being processed, please wait." });
   }
   processingSessions.add(lockKey);
 
@@ -159,7 +159,7 @@ exports.uploadDocument = async (req, res) => {
     const pdfData = await parsePdf(fileBuffer);
 
     if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
-      throw new Error("PDF parse hui, par text nahi mila.");
+      throw new Error("PDF was parsed but no text was found.");
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
@@ -181,14 +181,14 @@ exports.uploadDocument = async (req, res) => {
     const validDocs = docs.filter(doc => doc.pageContent && doc.pageContent.trim().length > 0);
 
     if (validDocs.length === 0) {
-      throw new Error("PDF me koi valid text chunks nahi bane.");
+      throw new Error("No valid text chunks could be created from the PDF.");
     }
 
     const texts = validDocs.map((doc) => doc.pageContent);
-    const vectorsArray = await embedInBatches(apiKey, texts, 90);
+    const vectorsArray = await embedInBatches(apiKey, texts, 20);
 
     if (!vectorsArray || vectorsArray.length === 0) {
-      throw new Error("Google API se embeddings generate nahi ho paye.");
+      throw new Error("Failed to generate embeddings from the Google API.");
     }
 
     const vectorsToUpsert = [];
@@ -210,7 +210,7 @@ exports.uploadDocument = async (req, res) => {
     }
 
     if (vectorsToUpsert.length === 0) {
-      throw new Error("Pinecone ke liye 0 valid records bache hain.");
+      throw new Error("No valid records remained to upsert into Pinecone.");
     }
 
     console.log(`Chunks: ${validDocs.length}, Embedded: ${vectorsArray.length}, ToUpsert: ${vectorsToUpsert.length}`);
@@ -270,7 +270,7 @@ exports.askQuestion = async (req, res) => {
       console.warn("Similarity search failed:", e.message);
     }
 
-    const prompt = `Context: ${context || "No context available."}\n\nQuestion: ${message}\nAnswer in ${language || "Hinglish"}:`;
+    const prompt = `Context: ${context || "No context available."}\n\nQuestion: ${message}\nAnswer in ${language || "English"}:`;
     const result = await model.invoke(prompt);
     return res.json({ reply: result.content });
   } catch (error) {
