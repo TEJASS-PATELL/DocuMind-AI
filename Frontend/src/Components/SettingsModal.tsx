@@ -93,14 +93,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
                 <option value="tamil">Tamil</option>
                 <option value="telugu">Telugu</option>
                 <option value="kannada">Kannada</option>
-                <option value="malayalam">Malayalam</option>
                 <option value="gujarati">Gujarati</option>
                 <option value="punjabi">Punjabi</option>
-                <option value="odia">Odia</option>
-                <option value="assamese">Assamese</option>
-                <option value="urdu">Urdu</option>
                 <option value="spanish">Spanish</option>
                 <option value="french">French</option>
+                <option value="russian">Russian</option>
                 <option value="german">German</option>
               </select>
             </div>
