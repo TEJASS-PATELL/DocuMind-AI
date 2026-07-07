@@ -10,6 +10,7 @@ import InputArea from "../Components/InputArea";
 interface Message {
     role: "user" | "model";
     text: string;
+    status?: "success" | "error";
 }
 
 const Chatbot: React.FC = () => {
@@ -97,13 +98,13 @@ const Chatbot: React.FC = () => {
             
             setMessages(prev => [
                 ...prev, 
-                { role: "model", text: `📚 System: "${file.name}" successfully process ho gayi hai! Ab aap iske baare me kuch bhi puch sakte hain.` }
+                { role: "model", text: `"${file.name}" was processed successfully! You can now ask anything about it.`, status: "success" }
             ]);
         } catch (error) {
             console.error("File upload failed:", error);
             setMessages(prev => [
                 ...prev, 
-                { role: "model", text: `❌ Error: "${file.name}" ko process karne me dikkat aayi.` }
+                { role: "model", text: `Error: something went wrong while processing "${file.name}".`, status: "error" }
             ]);
         } finally {
             setIsLoading(false);
