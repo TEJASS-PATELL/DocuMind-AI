@@ -22,17 +22,6 @@ const parsePdf = async (buffer) => {
   }
 };
 
-const isGreeting = (msg) => {
-  const greetings = [
-    "hi", "hello", "hey", "hola", "sup",
-    "good morning", "good afternoon", "good evening",
-  ];
-  const cleaned = msg.toLowerCase().trim().replace(/\s+/g, " ");
-  return greetings.some(
-    (g) => cleaned === g || cleaned.startsWith(g + " ") || cleaned.endsWith(" " + g)
-  );
-};
-
 const getModel = (apiKey) => {
   return new ChatGoogleGenerativeAI({
     apiKey,
@@ -259,12 +248,6 @@ exports.askQuestion = async (req, res) => {
     }
 
     const model = getModel(apiKey);
-
-    if (isGreeting(message)) {
-      const prompt = `You are a helpful AI chatbot. Respond politely to the user greeting "${message}" in ${language || "Hinglish"}.`;
-      const result = await model.invoke(prompt);
-      return res.json({ reply: result.content });
-    }
 
     let context = "";
     try {
