@@ -7,7 +7,7 @@ const pdfParseModule = require("pdf-parse-new");
 const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfParseModule.default;
 
 const EMBEDDING_MODEL = "gemini-embedding-001";
-const EMBEDDING_DIM = 768;
+const EMBEDDING_DIM = 1024;
 const processingSessions = new Set();
 
 const parsePdf = async (buffer) => {
@@ -223,22 +223,14 @@ exports.uploadDocument = async (req, res) => {
     }
 
     console.log(`Chunks: ${validDocs.length}, Embedded: ${vectorsArray.length}, ToUpsert: ${vectorsToUpsert.length}`);
-    console.log("BUILD-MARKER: v4-diagnostic");
 
     const BATCH_SIZE = 100;
     for (let i = 0; i < vectorsToUpsert.length; i += BATCH_SIZE) {
       const batch = vectorsToUpsert.slice(i, i + BATCH_SIZE);
       if (batch.length === 0) continue;
-      const payload = { records: batch };
-      console.log("Upsert payload sample:", JSON.stringify({
-        recordCount: payload.records.length,
-        firstRecordId: payload.records[0]?.id,
-        firstRecordValuesLength: payload.records[0]?.values?.length,
-        firstRecordHasMetadata: !!payload.records[0]?.metadata,
-      }));
       await pineconeIndex
         .namespace(String(sessionId || "default-session"))
-        .upsert(payload);
+        .upsert({ records: batch });
     }
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
