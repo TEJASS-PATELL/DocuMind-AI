@@ -14,7 +14,7 @@ interface Message {
 
 const Chatbot: React.FC = () => {
     const navigate = useNavigate();
-    const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [userInput, setUserInput] = useState("");
