@@ -4,7 +4,6 @@ import {
   FaFilePdf, FaSearch, FaChartBar, FaFileAlt,
   FaShieldAlt, FaBolt, FaPlus,
   FaFileWord, FaFilePowerpoint, FaFileExcel, FaFileCsv, FaFile,
-  FaCheckCircle, FaTimesCircle
 } from 'react-icons/fa';
 import './ChatWindow.css';
 
@@ -129,8 +128,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
             {msg.fileName && (
               <div className="msg-file-indicator">
                 {getFileIcon(msg.fileName)}
-                {msg.status === 'success' && <FaCheckCircle className="status-icon status-icon--success" />}
-                {msg.status === 'error' && <FaTimesCircle className="status-icon status-icon--error" />}
               </div>
             )}
             {msg.role === 'model' ? <ReactMarkdown>{msg.text}</ReactMarkdown> : <p>{msg.text}</p>}

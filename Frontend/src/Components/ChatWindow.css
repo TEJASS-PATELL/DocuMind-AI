@@ -240,6 +240,8 @@
   padding: 11px 15px;
   border-radius: 16px;
   font-size: 14px;
+  display: flex;
+  gap: 8px;
   line-height: 1.65;
   word-break: break-word;
 }
