@@ -65,6 +65,26 @@
   margin-bottom: 12px;
 }
 
+.msg-file-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.file-icon { font-size: 16px; }
+.file-icon--pdf { color: #e53e3e; }
+.file-icon--docx { color: #2b6cb0; }
+.file-icon--pptx { color: #dd6b20; }
+.file-icon--xlsx { color: #38a169; }
+.file-icon--csv { color: #38a169; }
+.file-icon--txt { color: #718096; }
+.file-icon--default { color: #a0aec0; }
+
+.status-icon { font-size: 14px; }
+.status-icon--success { color: #38a169; }
+.status-icon--error { color: #e53e3e; }
+
 .intro-sub {
   font-size: 14.5px;
   color: var(--text-muted);

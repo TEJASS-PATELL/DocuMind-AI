@@ -2,13 +2,17 @@ import React, { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
   FaFilePdf, FaSearch, FaChartBar, FaFileAlt,
-  FaShieldAlt, FaBolt, FaPlus
+  FaShieldAlt, FaBolt, FaPlus,
+  FaFileWord, FaFilePowerpoint, FaFileExcel, FaFileCsv, FaFile,
+  FaCheckCircle, FaTimesCircle
 } from 'react-icons/fa';
 import './ChatWindow.css';
 
 interface Message {
   role: 'user' | 'model';
   text: string;
+  status?: 'success' | 'error';
+  fileName?: string;
 }
 
 interface ChatWindowProps {
@@ -33,6 +37,31 @@ const SUGGESTIONS = [
   'List all action items mentioned in the report',
   'Compare the data in tables 2 and 4',
 ];
+
+const getFileIcon = (fileName?: string) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+
+  switch (ext) {
+    case 'pdf':
+      return <FaFilePdf className="file-icon file-icon--pdf" />;
+    case 'docx':
+    case 'doc':
+      return <FaFileWord className="file-icon file-icon--docx" />;
+    case 'pptx':
+    case 'ppt':
+      return <FaFilePowerpoint className="file-icon file-icon--pptx" />;
+    case 'xlsx':
+    case 'xls':
+      return <FaFileExcel className="file-icon file-icon--xlsx" />;
+    case 'csv':
+      return <FaFileCsv className="file-icon file-icon--csv" />;
+    case 'txt':
+    case 'md':
+      return <FaFileAlt className="file-icon file-icon--txt" />;
+    default:
+      return <FaFile className="file-icon file-icon--default" />;
+  }
+};
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoading }) => {
   const chatWindowRef = useRef<HTMLDivElement>(null);
@@ -97,6 +126,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
       {messages.map((msg, i) => (
         <div key={i} className={`msg-row msg-row--${msg.role}`}>
           <div className="msg-bubble">
+            {msg.fileName && (
+              <div className="msg-file-indicator">
+                {getFileIcon(msg.fileName)}
+                {msg.status === 'success' && <FaCheckCircle className="status-icon status-icon--success" />}
+                {msg.status === 'error' && <FaTimesCircle className="status-icon status-icon--error" />}
+              </div>
+            )}
             {msg.role === 'model' ? <ReactMarkdown>{msg.text}</ReactMarkdown> : <p>{msg.text}</p>}
           </div>
         </div>
