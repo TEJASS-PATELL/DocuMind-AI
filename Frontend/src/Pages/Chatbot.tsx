@@ -11,6 +11,7 @@ interface Message {
     role: "user" | "model";
     text: string;
     status?: "success" | "error";
+    fileName?: string;
 }
 
 const Chatbot: React.FC = () => {
@@ -98,13 +99,13 @@ const Chatbot: React.FC = () => {
             
             setMessages(prev => [
                 ...prev, 
-                { role: "model", text: `"${file.name}" was processed successfully! You can now ask anything about it.`, status: "success" }
+                { role: "model", text: `"${file.name}" was processed successfully! You can now ask anything about it.`, status: "success", fileName: file.name }
             ]);
         } catch (error) {
             console.error("File upload failed:", error);
             setMessages(prev => [
                 ...prev, 
-                { role: "model", text: `Error: something went wrong while processing "${file.name}".`, status: "error" }
+                { role: "model", text: `Error: something went wrong while processing "${file.name}".`, status: "error", fileName: file.name }
             ]);
         } finally {
             setIsLoading(false);
