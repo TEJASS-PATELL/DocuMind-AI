@@ -1,24 +1,56 @@
+const path = require("path");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
-
-const pdfParseModule = require("pdf-parse-new");
-const pdfParse = typeof pdfParseModule === "function" ? pdfParseModule : pdfParseModule.default;
+const { OfficeParser } = require("officeparser");
 
 const EMBEDDING_MODEL = "gemini-embedding-001";
 const EMBEDDING_DIM = 1024;
 const processingSessions = new Set();
 
-const parsePdf = async (buffer) => {
-  try {
-    if (typeof pdfParse !== "function") {
-      throw new Error("Cannot find valid pdfParse function in module.");
+const EXTENSION_TO_FILETYPE = {
+  ".pdf": "pdf",
+  ".docx": "docx",
+  ".pptx": "pptx",
+  ".xlsx": "xlsx",
+  ".odt": "odt",
+  ".odp": "odp",
+  ".ods": "ods",
+  ".rtf": "rtf",
+  ".md": "md",
+  ".html": "html",
+  ".csv": "csv",
+};
+
+const extractTextFromFile = async (buffer, originalName) => {
+  const ext = path.extname(originalName || "").toLowerCase();
+
+  if (ext === ".txt") {
+    const text = buffer.toString("utf-8").trim();
+    if (!text) {
+      throw new Error("Text file appears to be empty.");
     }
-    const data = await pdfParse(buffer);
-    return data;
+    return text;
+  }
+
+  const fileType = EXTENSION_TO_FILETYPE[ext];
+  if (!fileType) {
+    throw new Error(
+      `Unsupported file type "${ext || "unknown"}". Supported types: pdf, docx, pptx, xlsx, txt, odt, odp, ods, rtf, md, html, csv.`
+    );
+  }
+
+  try {
+    const ast = await OfficeParser.parseOffice(buffer, { fileType });
+    const result = await ast.to("text");
+    const text = (result?.value || "").trim();
+    if (!text) {
+      throw new Error("No text could be extracted from the file.");
+    }
+    return text;
   } catch (e) {
-    throw new Error("PDF parse fail: " + e.message);
+    throw new Error(`File parse failed: ${e.message}`);
   }
 };
 
@@ -156,10 +188,10 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const fileBuffer = fs.readFileSync(req.file.path);
-    const pdfData = await parsePdf(fileBuffer);
+    const extractedText = await extractTextFromFile(fileBuffer, req.file.originalname);
 
-    if (!pdfData || !pdfData.text || pdfData.text.trim().length === 0) {
-      throw new Error("PDF was parsed but no text was found.");
+    if (!extractedText || extractedText.trim().length === 0) {
+      throw new Error("File was parsed but no text was found.");
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
@@ -174,7 +206,7 @@ exports.uploadDocument = async (req, res) => {
     };
 
     const docs = await splitter.createDocuments(
-      [pdfData.text],
+      [extractedText],
       [safeMetadata]
     );
 
