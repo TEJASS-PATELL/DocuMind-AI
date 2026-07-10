@@ -77,7 +77,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
       {messages.length === 0 && (
         <div className="chat-intro">
           <div className="chat-intro-status">
-            <span className="status-text">DocuMind Core v2.0 Active</span>
+            <span className="status-text">DocuMind Based On gemini-v1.5-flash Active</span>
           </div>
 
           <h2 className="intro-heading">
@@ -146,7 +146,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
       {isLoading && !displayedText && (
         <div className="msg-row msg-row--model">
           <div className="msg-bubble msg-bubble--typing">
-            <span /><span /><span /><span />
+            <span /><span /><span /><span /><span />
           </div>
         </div>
       )}
