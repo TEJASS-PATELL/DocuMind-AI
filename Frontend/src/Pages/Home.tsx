@@ -151,7 +151,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
       <Working />
       <Feature />
       <Footer />
