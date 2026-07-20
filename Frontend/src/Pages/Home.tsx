@@ -56,11 +56,8 @@ const HomePage = () => {
               </div>
             ) : (
               <div className="logged-out-cta">
-                <Link to="/signup" className="btn-primary">
+                <Link to="/login" className="btn-primary">
                   Get started free <FaArrowRight />
-                </Link>
-                <Link to="/login" className="btn-secondary">
-                  <FaSignInAlt /> Sign in
                 </Link>
               </div>
             )}
