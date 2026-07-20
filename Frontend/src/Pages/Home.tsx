@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  FaSignInAlt, FaFileAlt, FaShieldAlt, FaArrowRight, FaBolt,
+  FaFileAlt, FaShieldAlt, FaArrowRight, FaBolt,
   FaBrain, FaFilePdf, FaFileWord, FaFilePowerpoint,
   FaCheckCircle
 } from "react-icons/fa";
