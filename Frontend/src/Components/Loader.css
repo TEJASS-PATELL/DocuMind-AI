@@ -14,14 +14,14 @@
   width: 8px;
   height: 55px;
   background: #2A5C45;
-  border-radius: 4px;
-  animation: bounce 1s ease-in-out infinite;
+  border-radius: 5px;
+  animation: bounce 2s ease-in-out infinite; 
 }
 
-.loader-bars span:nth-child(1) { animation-delay: -0.4s; }
-.loader-bars span:nth-child(2) { animation-delay: -0.3s; }
-.loader-bars span:nth-child(3) { animation-delay: -0.2s; }
-.loader-bars span:nth-child(4) { animation-delay: -0.1s; }
+.loader-bars span:nth-child(1) { animation-delay: -0.8s; }
+.loader-bars span:nth-child(2) { animation-delay: -0.6s; }
+.loader-bars span:nth-child(3) { animation-delay: -0.4s; }
+.loader-bars span:nth-child(4) { animation-delay: -0.2s; }
 .loader-bars span:nth-child(5) { animation-delay: 0s; }
 
 @keyframes bounce {
