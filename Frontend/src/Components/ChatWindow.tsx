@@ -18,7 +18,6 @@ interface ChatWindowProps {
   isLoading: boolean;
 }
 
-// Reusable AI Icon Component
 const AiIcon: React.FC<{ isSpinning?: boolean }> = ({ isSpinning = false }) => (
   <div className="ai-avatar-wrapper">
     <svg
@@ -83,7 +82,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
       <div className="chat-window-inner">
         {messages.map((msg, i) => (
           <div key={i} className={`msg-row msg-row--${msg.role}`}>
-            {/* Show AI Icon beside Model messages */}
             {msg.role === 'model' && <AiIcon />}
             
             <div className="msg-bubble">
@@ -97,7 +95,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
           </div>
         ))}
 
-        {/* Streaming AI Answer */}
         {displayedText && (
           <div className="msg-row msg-row--model">
             <AiIcon isSpinning={true} />
@@ -107,7 +104,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
           </div>
         )}
 
-        {/* Loading / Typing State */}
         {isLoading && !displayedText && (
           <div className="msg-row msg-row--model">
             <AiIcon isSpinning={true} />
