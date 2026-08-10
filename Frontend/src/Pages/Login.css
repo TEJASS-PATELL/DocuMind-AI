@@ -37,8 +37,21 @@
 .logo-top-left {
   display: flex;
   align-items: center;
-  gap: 10px;
   margin-bottom: 28px;
+}
+
+.spin-icon {
+  animation: spin 5s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .logo-top-left .logo-name {

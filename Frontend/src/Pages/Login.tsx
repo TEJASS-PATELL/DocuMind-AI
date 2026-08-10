@@ -30,6 +30,26 @@ const Login: React.FC = () => {
     <div className="login-wrapper">
       <div className="login-box">
         <div className="logo-top-left">
+          <svg
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
+            width="30"
+            className="spin-icon"
+            height="30"
+            style={{ flexShrink: 0 }}
+          >
+            <g transform="translate(256, 256)">
+              <path
+                d="M 0 -140 C 35 -45 45 -35 140 0 C 45 35 35 45 0 140 C -35 45 -45 35 -140 0 C -45 -35 -35 -45 0 -140 Z"
+                fill="#1A1A1A"
+              />
+              <path
+                d="M 0 -85 C 22 -28 28 -22 85 0 C 28 22 22 28 0 85 C -22 28 -28 22 -85 0 C -28 -22 -22 -28 0 -85 Z"
+                fill="#2A5C45"
+              />
+              <circle cx="0" cy="0" r="16" fill="#FFFFFF" />
+            </g>
+          </svg>
           <span className="logo-name">DocuMind AI</span>
         </div>
 
