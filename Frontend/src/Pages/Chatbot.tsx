@@ -14,13 +14,6 @@ interface Message {
   fileName?: string;
 }
 
-const CAPABILITIES = [
-  { icon: FileStack, label: "Any Format" },
-  { icon: FileSearch, label: "Semantic Search" },
-  { icon: ShieldCheck, label: "Private & Secure" },
-  { icon: Zap, label: "Instant Answers" },
-];
-
 const Chatbot: React.FC = () => {
   const navigate = useNavigate();
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
