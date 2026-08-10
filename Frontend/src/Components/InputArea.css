@@ -227,22 +227,3 @@
   }
 }
 
-/* 1. Icon Wrapper - Pure Transparent & No Border */
-.ai-avatar-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 4px;
-  flex-shrink: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-/* 2. Text Message Bubble - Border Added Back */
-.msg-row--model .msg-bubble {
-  background: var(--bg-card, #f7f7f8);
-  border: 1px solid var(--border-med, #e2e8f0); /* Text card par border */
-  color: #1a1a1a;
-  border-top-left-radius: 4px;
-}
