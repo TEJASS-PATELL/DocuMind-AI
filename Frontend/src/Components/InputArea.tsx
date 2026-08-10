@@ -85,6 +85,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                 <div className="file-chips">
                     {uploadedFiles.map(file => (
                         <div className="file-chip" key={file.id}>
+                            
                             <span className="file-chip-icon">
                                 <FileIcon type={file.type} />
                             </span>
