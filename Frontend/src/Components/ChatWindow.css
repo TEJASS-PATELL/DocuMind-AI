@@ -49,7 +49,7 @@
 
 .msg-row {
   display: flex;
-  align-items: flex-start; /* Clean top alignment with icon */
+  align-items: flex-start;
   gap: 12px;
   animation: msgSlideUp 0.28s ease both;
 }
@@ -93,10 +93,12 @@
 }
 
 .msg-row--model .msg-bubble {
-  background: var(--bg-card, #f7f7f8);
-  border: 1px solid rgb(215, 215, 215); /* Border Hata Diya Gaya Hai */
-  color: #1a1a1a;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.05);
+  color: #0f172a;
   border-bottom-left-radius: 4px;
+  transition: all 0.2s ease-in-out;
 }
 
 .msg-row--user .msg-bubble {
@@ -106,44 +108,149 @@
 }
 
 .msg-row--model .msg-bubble p:not(:last-child) {
-  margin-bottom: 8px;
-}
-
-.msg-row--model .msg-bubble ul,
-.msg-row--model .msg-bubble ol {
-  padding-left: 18px;
-  margin-bottom: 8px;
-}
-
-.msg-row--model .msg-bubble strong {
-  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .msg-row--model .msg-bubble h1,
 .msg-row--model .msg-bubble h2,
 .msg-row--model .msg-bubble h3 {
   font-family: 'Instrument Serif', serif;
-  font-weight: 400;
-  color: var(--accent);
-  margin: 12px 0 6px;
+  font-weight: 600;
+  color: #1e1b4b;
+  margin: 16px 0 8px;
+  line-height: 1.3;
+}
+
+.msg-row--model .msg-bubble h1 {
+  font-size: 1.4rem;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 6px;
+}
+
+.msg-row--model .msg-bubble h2 {
+  font-size: 1.25rem;
+}
+
+.msg-row--model .msg-bubble h3 {
+  font-size: 1.1rem;
+}
+
+.msg-row--model .msg-bubble strong {
+  font-weight: 600;
+  color: #0284c7;
+}
+
+.msg-row--model .msg-bubble a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1.5px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.msg-row--model .msg-bubble a:hover {
+  color: #1d4ed8;
+  border-bottom-color: #2563eb;
 }
 
 .msg-row--model .msg-bubble code {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 12.5px;
+  background: #f1f5f9;
+  color: #d97706;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .msg-row--model .msg-bubble pre {
-  padding: 12px 14px;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 14px 16px;
   overflow-x: auto;
-  margin: 8px 0;
-  border-radius: 8px;
-  background: #f0f0f0;
+  margin: 12px 0;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Typing Indicator Dots */
+.msg-row--model .msg-bubble pre code {
+  background: transparent;
+  color: #e2e8f0;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.msg-row--model .msg-bubble pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.msg-row--model .msg-bubble pre::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.msg-row--model .msg-bubble ul,
+.msg-row--model .msg-bubble ol {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+.msg-row--model .msg-bubble li {
+  margin-bottom: 6px;
+}
+
+.msg-row--model .msg-bubble li::marker {
+  color: #6366f1;
+  font-weight: bold;
+}
+
+.msg-row--model .msg-bubble blockquote {
+  margin: 12px 0;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-left: 4px solid #6366f1;
+  color: #475569;
+  font-style: italic;
+  border-radius: 0 8px 8px 0;
+}
+
+.msg-row--model .msg-bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 13.5px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.msg-row--model .msg-bubble th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.msg-row--model .msg-bubble td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.msg-row--model .msg-bubble tr:nth-child(even) {
+  background: #fdfdfd;
+}
+
+.msg-row--model .msg-bubble tr:last-child td {
+  border-bottom: none;
+}
+
 .msg-bubble--typing {
   display: flex;
   flex-direction: row;

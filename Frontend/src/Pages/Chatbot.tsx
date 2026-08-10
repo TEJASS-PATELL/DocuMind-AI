@@ -203,7 +203,7 @@ const Chatbot: React.FC = () => {
           {isEmptyState ? (
             <div className="empty-state">
               <div className="empty-state-inner">
-                <h1 className="empty-greeting" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '20px' }}>
+                <h1 className="empty-greeting" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <svg
                     onClick={() => navigate("/")}
                     viewBox="0 0 512 512"
