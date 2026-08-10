@@ -5,7 +5,7 @@ import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import ChatWindow from "../Components/ChatWindow";
 import InputArea from "../Components/InputArea";
-import { FileSearch, ShieldCheck, Zap, FileStack, Settings, LogOut, X, MessageSquarePlus, SlidersHorizontal } from "lucide-react";
+import { Settings, LogOut, X, MessageSquarePlus, SlidersHorizontal } from "lucide-react";
 
 interface Message {
   role: "user" | "model";
