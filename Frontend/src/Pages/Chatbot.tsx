@@ -205,6 +205,7 @@ const Chatbot: React.FC = () => {
               <div className="empty-state-inner">
                 <h1 className="empty-greeting" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '20px' }}>
                   <svg
+                    onClick={() => navigate("/")}
                     viewBox="0 0 512 512"
                     xmlns="http://www.w3.org/2000/svg"
                     width="40"
@@ -224,7 +225,7 @@ const Chatbot: React.FC = () => {
                       <circle cx="0" cy="0" r="16" fill="#FFFFFF" />
                     </g>
                   </svg>
-                  <span>Back at it, <strong>{username}</strong></span>
+                  <span>Ready to analyze your docs, <strong>{username}</strong>?</span>
                 </h1>
                 <p className="empty-subtitle">
                   Upload a document and ask me anything — I'll read it and find the best answers for you.

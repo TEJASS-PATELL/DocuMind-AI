@@ -202,6 +202,7 @@ body,
 
 .spin-icon {
   animation: spin 5s linear infinite;
+  cursor: pointer;
   transform-origin: center;
 }
 

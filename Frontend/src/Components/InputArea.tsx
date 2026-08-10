@@ -131,7 +131,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                     value={userInput}
                     onChange={e => setUserInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask anything about your document..."
+                    placeholder="Ask anything about your document...."
                     disabled={isLoading || isDisabled}
                     rows={1}
                 />
