@@ -183,7 +183,7 @@ body,
   font-family: 'Instrument Serif', serif;
   font-size: 34px;
   font-weight: 400;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--text-primary);
   letter-spacing: -0.02em;
   text-align: center;
   margin: 2px 0 0;
@@ -197,7 +197,7 @@ body,
 
 .empty-greeting strong {
   font-weight: 600;
-  color: var(--accent, #1a1a1a);
+  color: var(--accent);
 }
 
 .spin-icon {
