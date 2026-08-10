@@ -1,7 +1,6 @@
-/* ==========================================
-   Base Layout
-   ========================================== */
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -12,10 +11,32 @@ html, body, #root {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: var(--bg);
+  background-color: white;
   overflow: hidden;
   position: relative;
   font-family: 'DM Sans', sans-serif;
+}
+
+.bg-grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 85%);
+}
+
+.ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.45;
+  animation: floatAura 12s ease-in-out infinite alternate;
 }
 
 .main-box,
@@ -26,17 +47,107 @@ html, body, #root {
   flex: 1;
   min-height: 0;
   width: 100%;
-  background-color: var(--bg);
+  background: transparent;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .chat-box {
   position: relative;
 }
 
-/* ==========================================
-   Empty State Container & Layout
-   ========================================== */
+.top-menu-wrapper {
+  position: absolute;
+  top: 14px;
+  right: 15px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.user-avatar-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-family: 'Instrument Serif', serif;
+  font-size: 16px;
+  background: transparent;
+  color: black;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.user-avatar-btn .icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.user-avatar-btn.active {
+  color: black;
+  border-color: transparent;
+}
+
+.user-avatar-btn.active .icon-wrapper {
+  transform: rotate(180deg) scale(1.05);
+}
+
+.slide-menu-horizontal,
+.slide-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 3px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 100;
+}
+
+.slide-menu-horizontal.open,
+.slide-menu-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  gap: 4px;
+}
+
+.slide-menu-dropdown .menu-item,
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #000000;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.slide-menu-dropdown .menu-item--danger,
+.menu-item--danger {
+  color: #ff0000;
+}
+
 .empty-state {
   flex: 1;
   min-height: 0;
@@ -51,22 +162,9 @@ html, body, #root {
   position: relative;
 }
 
-.empty-state-glow {
-  position: absolute;
-  top: 8%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 480px;
-  height: 320px;
-  background: radial-gradient(ellipse at center, var(--accent-light) 0%, transparent 70%);
-  filter: blur(10px);
-  pointer-events: none;
-  z-index: 0;
-}
-
 .empty-state-inner {
   width: 100%;
-  max-width: 690px;
+  max-width: 710px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -77,86 +175,45 @@ html, body, #root {
   animation: emptyFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ==========================================
-   Badges, Icons & Header Components
-   ========================================== */
-.empty-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-med);
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-.empty-badge svg {
-  color: var(--accent);
-}
-
-.empty-badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-light);
-  animation: dotPulse 2s ease-in-out infinite;
-}
-
-.empty-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: 1px solid var(--border-med);
-  box-shadow: 0 0 0 6px var(--accent-light), 0 4px 14px rgba(0, 0, 0, 0.05);
-  margin-top: 4px;
-}
-
-.empty-greeting-icon {
-  color: var(--accent);
-  flex-shrink: 0;
-}
-
 .empty-greeting {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 12px;
   font-family: 'Instrument Serif', serif;
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 400;
-  color: var(--text-primary);
+  color: var(--text-primary, #1a1a1a);
   letter-spacing: -0.02em;
   text-align: center;
   margin: 2px 0 0;
 }
 
+.empty-greeting svg {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+}
+
 .empty-greeting strong {
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent, #1a1a1a);
+}
+
+.spin-icon {
+  animation: spin 5s linear infinite;
+  transform-origin: center;
 }
 
 .empty-subtitle {
-  font-size: 14.5px;
-  color: var(--text-muted);
+  font-size: 15px;
+  color: var(--text-muted, #94a3b8);
   text-align: center;
   line-height: 1.6;
-  max-width: 420px;
+  max-width: 440px;
   margin: -6px 0 8px;
 }
 
-/* ==========================================
-   Input & Pills
-   ========================================== */
 .empty-state .input-area {
   padding: 0;
   max-width: 100%;
@@ -164,159 +221,36 @@ html, body, #root {
   width: 100%;
 }
 
-.empty-pills {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  transition: all 0.18s ease;
-  cursor: pointer;
+@keyframes slideMenuDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.pill:hover {
-  border-color: var(--accent);
-  color: var(--text-primary);
-  background: var(--accent-light);
-  transform: translateY(-1px);
-}
-
-.pill svg {
-  color: var(--accent);
-}
-
-/* ==========================================
-   Suggestions Grid & Cards
-   ========================================== */
-.empty-suggestions {
-  width: 100%;
-  margin-top: 10px;
-}
-
-.empty-suggestions-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 10px;
-  text-align: left;
-}
-
-.empty-suggestions-label svg {
-  color: var(--accent);
-}
-
-.empty-suggestions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.suggestion-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-med);
-  border-radius: 12px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'DM Sans', sans-serif;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  animation: cardFadeIn 0.4s ease both;
-}
-
-.suggestion-card:hover {
-  border-color: var(--accent);
-  background: var(--accent-light);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-}
-
-.suggestion-card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-top: 6px;
-  border-radius: 8px;
-  background: var(--accent-light);
-  color: var(--accent);
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.suggestion-card:hover .suggestion-card-icon {
-  transform: scale(1.08);
-}
-
-.suggestion-card-text {
-  font-size: 12.5px;
-  color: var(--text-primary);
-  line-height: 1.55;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  flex: 1;
-  padding-right: 4px;
-}
-
-.suggestion-card-arrow {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  color: var(--accent);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: all 0.2s ease;
-}
-
-.suggestion-card:hover .suggestion-card-arrow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.empty-note {
-  font-size: 12px;
-  color: var(--text-subtle);
-  text-align: center;
-  line-height: 1.6;
-  max-width: 380px;
-  margin-top: 4px;
-}
-
-.empty-note strong {
-  color: var(--accent);
-}
-
-/* ==========================================
-   Animations
-   ========================================== */
-@keyframes dotPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+@keyframes floatAura {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(40px, -30px) scale(1.08);
+  }
+  100% {
+    transform: translate(-20px, 40px) scale(0.95);
+  }
 }
 
 @keyframes emptyFadeUp {
@@ -330,39 +264,23 @@ html, body, #root {
   }
 }
 
-@keyframes cardFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ==========================================
-   Responsive Styles
-   ========================================== */
 @media (max-width: 540px) {
+  .top-menu-wrapper {
+    top: 12px;
+    right: 14px;
+  }
+
+  .user-avatar-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+  }
+
   .empty-greeting {
-    font-size: 23px;
+    font-size: 24px;
   }
 
   .empty-subtitle {
     font-size: 13.5px;
-  }
-
-  .empty-suggestions-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .suggestion-card-text {
-    font-size: 12.5px;
-  }
-
-  .empty-state-glow {
-    width: 320px;
-    height: 220px;
   }
 }
