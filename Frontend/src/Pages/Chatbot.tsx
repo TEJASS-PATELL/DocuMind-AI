@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import ChatHeader from "../Components/ChatBotheader";
 import ChatWindow from "../Components/ChatWindow";
 import InputArea from "../Components/InputArea";
+import { FileSearch, ShieldCheck, Zap, FileStack, Sparkles } from "lucide-react";
 
 interface Message {
     role: "user" | "model";
@@ -13,6 +14,13 @@ interface Message {
     status?: "success" | "error";
     fileName?: string;
 }
+
+const CAPABILITIES = [
+    { icon: FileStack, label: "Any Format" },
+    { icon: FileSearch, label: "Semantic Search" },
+    { icon: ShieldCheck, label: "Private & Secure" },
+    { icon: Zap, label: "Instant Answers" },
+];
 
 const Chatbot: React.FC = () => {
     const navigate = useNavigate();
@@ -33,6 +41,8 @@ const Chatbot: React.FC = () => {
     });
 
     const isReadyToChat = useMemo(() => userId !== null, [userId]);
+    const username = localStorage.getItem("username") || "there";
+    const isEmptyState = messages.length === 0 && !displayedText;
 
     useEffect(() => {
         const initChatbot = async () => {
@@ -62,7 +72,7 @@ const Chatbot: React.FC = () => {
         }
         setMessages([]);
         setDisplayedText("");
-        setSessionId(`session-${Date.now()}`); 
+        setSessionId(`session-${Date.now()}`);
     };
 
     const typeMessage = (fullText: string) => {
@@ -72,7 +82,7 @@ const Chatbot: React.FC = () => {
 
         let index = 0;
         setDisplayedText("");
-        
+
         typingIntervalRef.current = setInterval(() => {
             setDisplayedText(prev => prev + fullText[index]);
             index++;
@@ -96,15 +106,15 @@ const Chatbot: React.FC = () => {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            
+
             setMessages(prev => [
-                ...prev, 
+                ...prev,
                 { role: "model", text: `"${file.name}" was processed successfully! You can now ask anything about it.`, status: "success", fileName: file.name }
             ]);
         } catch (error) {
             console.error("File upload failed:", error);
             setMessages(prev => [
-                ...prev, 
+                ...prev,
                 { role: "model", text: `Error: something went wrong while processing "${file.name}".`, status: "error", fileName: file.name }
             ]);
         } finally {
@@ -121,8 +131,8 @@ const Chatbot: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const { data } = await api.post("/api/chats/startChat", { 
-                message: text, 
+            const { data } = await api.post("/api/chats/startChat", {
+                message: text,
                 sessionId,
                 language: settings.language,
                 focusMode: settings.focusMode,
@@ -154,21 +164,61 @@ const Chatbot: React.FC = () => {
                         handleNewChat={() => handleNewChat()}
                         handleLogout={handleLogout}
                     />
-                    
-                    <ChatWindow 
-                        messages={messages} 
-                        displayedText={displayedText} 
-                        isLoading={isLoading} 
-                    />
 
-                    <InputArea
-                        userInput={userInput}
-                        setUserInput={setUserInput}
-                        handleSendMessage={handleSendMessage}
-                        handleFileUpload={handleFileUpload}
-                        isLoading={isLoading}
-                        isReadyToChat={isReadyToChat}
-                    />
+                    {isEmptyState ? (
+                        <div className="empty-state">
+                            <div className="empty-state-glow" />
+                            <div className="empty-state-inner">
+                                <span className="empty-badge">
+                                    <Sparkles size={12} />
+                                    DocuMind AI — Document Q&A
+                                </span>
+
+                                <h1 className="empty-greeting">
+                                    Back at it, <strong>{username}</strong>
+                                </h1>
+                                <p className="empty-subtitle">
+                                    Upload a document and ask me anything — I'll read it and find the answers for you.
+                                </p>
+
+                                <InputArea
+                                    userInput={userInput}
+                                    setUserInput={setUserInput}
+                                    handleSendMessage={handleSendMessage}
+                                    handleFileUpload={handleFileUpload}
+                                    isLoading={isLoading}
+                                    isReadyToChat={isReadyToChat}
+                                />
+
+                                <div className="empty-pills">
+                                    {CAPABILITIES.map(({ icon: Icon, label }) => (
+                                        <span className="pill" key={label}>
+                                            <Icon size={13} />
+                                            {label}
+                                        </span>
+                                    ))}
+                                </div>
+
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="chat-body">
+                            <ChatWindow
+                                messages={messages}
+                                displayedText={displayedText}
+                                isLoading={isLoading}
+                            />
+
+                            <InputArea
+                                userInput={userInput}
+                                setUserInput={setUserInput}
+                                handleSendMessage={handleSendMessage}
+                                handleFileUpload={handleFileUpload}
+                                isLoading={isLoading}
+                                isReadyToChat={isReadyToChat}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
