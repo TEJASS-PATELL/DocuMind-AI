@@ -1,9 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
-  FaFilePdf, FaSearch, FaChartBar, FaFileAlt,
-  FaShieldAlt, FaBolt, FaPlus,
-  FaFileWord, FaFilePowerpoint, FaFileExcel, FaFileCsv, FaFile,
+  FaFilePdf, FaFileWord, FaFilePowerpoint, FaFileExcel, FaFileCsv, FaFileAlt, FaFile,
 } from 'react-icons/fa';
 import './ChatWindow.css';
 
@@ -20,22 +18,31 @@ interface ChatWindowProps {
   isLoading: boolean;
 }
 
-const TAGS = [
-  { icon: <FaFilePdf />, label: 'PDF Analysis' },
-  { icon: <FaSearch />, label: 'Semantic Search' },
-  { icon: <FaChartBar />, label: 'Data & Tables' },
-  { icon: <FaFileAlt />, label: 'Research Papers' },
-  { icon: <FaShieldAlt />, label: 'Private & Secure' },
-  { icon: <FaBolt />, label: 'Instant Answers' },
-  { icon: <FaPlus />, label: 'Explore More', more: true },
-];
-
-const SUGGESTIONS = [
-  'Summarize the key findings of this document',
-  'What does section 3 say about revenue?',
-  'List all action items mentioned in the report',
-  'Compare the data in tables 2 and 4',
-];
+// Reusable AI Icon Component
+const AiIcon: React.FC<{ isSpinning?: boolean }> = ({ isSpinning = false }) => (
+  <div className="ai-avatar-wrapper">
+    <svg
+      viewBox="0 0 512 512"
+      xmlns="http://www.w3.org/2000/svg"
+      width="40"
+      height="40"
+      className={`ai-icon-svg ${isSpinning ? 'spin-icon' : ''}`}
+      style={{ flexShrink: 0 }}
+    >
+      <g transform="translate(256, 256)">
+        <path
+          d="M 0 -140 C 35 -45 45 -35 140 0 C 45 35 35 45 0 140 C -35 45 -45 35 -140 0 C -45 -35 -35 -45 0 -140 Z"
+          fill="#1A1A1A"
+        />
+        <path
+          d="M 0 -85 C 22 -28 28 -22 85 0 C 28 22 22 28 0 85 C -22 28 -28 22 -85 0 C -28 -22 -22 -28 0 -85 Z"
+          fill="#2A5C45"
+        />
+        <circle cx="0" cy="0" r="16" fill="#FFFFFF" />
+      </g>
+    </svg>
+  </div>
+);
 
 const getFileIcon = (fileName?: string) => {
   const ext = fileName?.split('.').pop()?.toLowerCase() || '';
@@ -64,7 +71,6 @@ const getFileIcon = (fileName?: string) => {
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoading }) => {
   const chatWindowRef = useRef<HTMLDivElement>(null);
-  const username = localStorage.getItem('username') || 'None';
 
   useEffect(() => {
     if (chatWindowRef.current) {
@@ -74,82 +80,45 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
 
   return (
     <div className="chat-window" ref={chatWindowRef}>
-      {messages.length === 0 && (
-        <div className="chat-intro">
-          <div className="chat-intro-status">
-            <span className="status-text">DocuMind Based On gemini-v1.5-flash Active</span>
-          </div>
-
-          <h2 className="intro-heading">
-            {username ? <>Hey, <strong>{username}</strong></> : 'Welcome'}
-          </h2>
-
-          <p className="intro-sub">
-            I'm <strong>DocuMind AI</strong> — upload a document and ask me anything.
-          </p>
-
-          <div className="intro-tags">
-            {TAGS.map(t => (
-              <span className={`intro-tag${t.more ? ' intro-tag--more' : ''}`} key={t.label}>
-                {t.icon} {t.label}
-              </span>
-            ))}
-          </div>
-
-          <div className="intro-features-grid">
-            <div className="feature-cards">
-              <div className="feature-card-title">Instant Analysis</div>
-              <div className="feature-card-desc">Extract key insights from long documents in seconds.</div>
-            </div>
-            <div className="feature-cards">
-              <div className="feature-card-title">Smart Query</div>
-              <div className="feature-card-desc">Ask complex questions and get context-aware answers.</div>
+      <div className="chat-window-inner">
+        {messages.map((msg, i) => (
+          <div key={i} className={`msg-row msg-row--${msg.role}`}>
+            {/* Show AI Icon beside Model messages */}
+            {msg.role === 'model' && <AiIcon />}
+            
+            <div className="msg-bubble">
+              {msg.fileName && (
+                <div className="msg-file-indicator">
+                  {getFileIcon(msg.fileName)}
+                </div>
+              )}
+              {msg.role === 'model' ? <ReactMarkdown>{msg.text}</ReactMarkdown> : <p>{msg.text}</p>}
             </div>
           </div>
+        ))}
 
-          <div className="intro-suggestions">
-            <p className="suggestions-label">Try asking:</p>
-            <div className="suggestions-list">
-              {SUGGESTIONS.map(s => (
-                <span className="suggestion-chip" key={s}>{s}</span>
-              ))}
+        {/* Streaming AI Answer */}
+        {displayedText && (
+          <div className="msg-row msg-row--model">
+            <AiIcon isSpinning={true} />
+            <div className="msg-bubble">
+              <ReactMarkdown>{displayedText}</ReactMarkdown>
             </div>
           </div>
+        )}
 
-          <p className="intro-note">
-            Upload a document using the <strong>+</strong> button, then start chatting.
-          </p>
-        </div>
-      )}
-
-      {messages.map((msg, i) => (
-        <div key={i} className={`msg-row msg-row--${msg.role}`}>
-          <div className="msg-bubble">
-            {msg.fileName && (
-              <div className="msg-file-indicator">
-                {getFileIcon(msg.fileName)}
-              </div>
-            )}
-            {msg.role === 'model' ? <ReactMarkdown>{msg.text}</ReactMarkdown> : <p>{msg.text}</p>}
+        {/* Loading / Typing State */}
+        {isLoading && !displayedText && (
+          <div className="msg-row msg-row--model">
+            <AiIcon isSpinning={true} />
+            <div className="msg-bubble msg-bubble--typing">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
-        </div>
-      ))}
-
-      {displayedText && (
-        <div className="msg-row msg-row--model">
-          <div className="msg-bubble">
-            <ReactMarkdown>{displayedText}</ReactMarkdown>
-          </div>
-        </div>
-      )}
-
-      {isLoading && !displayedText && (
-        <div className="msg-row msg-row--model">
-          <div className="msg-bubble msg-bubble--typing">
-            <span /><span /><span /><span /><span />
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
