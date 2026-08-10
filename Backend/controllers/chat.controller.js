@@ -57,7 +57,7 @@ const extractTextFromFile = async (buffer, originalName) => {
 const getModel = (apiKey) => {
   return new ChatGoogleGenerativeAI({
     apiKey,
-    model: "gemini-2.5-flash",
+    model: "gemini-3.5-flash-lite",
     temperature: 0.3,
     maxRetries: 3,
     maxConcurrency: 1,
