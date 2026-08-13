@@ -1,7 +1,7 @@
 .input-area {
   flex-shrink: 0;
   width: 100%;
-  max-width: 780px;
+  max-width: 880px;
   margin: 0 auto;
   padding: 12px 20px 18px;
   background: transparent;
@@ -203,7 +203,6 @@
 }
 
 .input-btn--send.input-btn--active:hover {
-  background: #111;
   transform: translateY(-1px) scale(1.04);
 }
 

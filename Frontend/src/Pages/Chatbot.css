@@ -164,7 +164,7 @@ body,
 
 .empty-state-inner {
   width: 100%;
-  max-width: 710px;
+  max-width: 740px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -181,7 +181,7 @@ body,
   justify-content: center;
   gap: 12px;
   font-family: 'Instrument Serif', serif;
-  font-size: 34px;
+  font-size: 40px;
   font-weight: 400;
   color: var(--text-primary);
   letter-spacing: -0.02em;
@@ -190,8 +190,8 @@ body,
 }
 
 .empty-greeting svg {
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
   flex-shrink: 0;
 }
 
@@ -207,12 +207,12 @@ body,
 }
 
 .empty-subtitle {
-  font-size: 15px;
+  font-size: 16.5px;
   color: var(--text-muted, #94a3b8);
   text-align: center;
   line-height: 1.6;
-  max-width: 440px;
-  margin: -6px 0 8px;
+  max-width: 470px;
+  margin: -12px 0 8px;
 }
 
 .empty-state .input-area {

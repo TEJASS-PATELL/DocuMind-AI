@@ -18,30 +18,6 @@ interface ChatWindowProps {
   isLoading: boolean;
 }
 
-const AiIcon: React.FC<{ isSpinning?: boolean }> = ({ isSpinning = false }) => (
-  <div className="ai-avatar-wrapper">
-    <svg
-      viewBox="0 0 512 512"
-      xmlns="http://www.w3.org/2000/svg"
-      width="40"
-      height="40"
-      className={`ai-icon-svg ${isSpinning ? 'spin-icon' : ''}`}
-      style={{ flexShrink: 0 }}
-    >
-      <g transform="translate(256, 256)">
-        <path
-          d="M 0 -140 C 35 -45 45 -35 140 0 C 45 35 35 45 0 140 C -35 45 -45 35 -140 0 C -45 -35 -35 -45 0 -140 Z"
-          fill="#1A1A1A"
-        />
-        <path
-          d="M 0 -85 C 22 -28 28 -22 85 0 C 28 22 22 28 0 85 C -22 28 -28 22 -85 0 C -28 -22 -22 -28 0 -85 Z"
-          fill="#2A5C45"
-        />
-        <circle cx="0" cy="0" r="16" fill="#FFFFFF" />
-      </g>
-    </svg>
-  </div>
-);
 
 const getFileIcon = (fileName?: string) => {
   const ext = fileName?.split('.').pop()?.toLowerCase() || '';
@@ -82,7 +58,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
       <div className="chat-window-inner">
         {messages.map((msg, i) => (
           <div key={i} className={`msg-row msg-row--${msg.role}`}>
-            {msg.role === 'model' && <AiIcon />}
+            {msg.role === 'model'}
             
             <div className="msg-bubble">
               {msg.fileName && (
@@ -97,7 +73,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
 
         {displayedText && (
           <div className="msg-row msg-row--model">
-            <AiIcon isSpinning={true} />
             <div className="msg-bubble">
               <ReactMarkdown>{displayedText}</ReactMarkdown>
             </div>
@@ -106,7 +81,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
 
         {isLoading && !displayedText && (
           <div className="msg-row msg-row--model">
-            <AiIcon isSpinning={true} />
             <div className="msg-bubble msg-bubble--typing">
               <span></span>
               <span></span>
