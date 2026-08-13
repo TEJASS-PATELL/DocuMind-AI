@@ -85,6 +85,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
               <span></span>
               <span></span>
               <span></span>
+              <span></span>
             </div>
           </div>
         )}
