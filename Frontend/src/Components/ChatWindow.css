@@ -3,7 +3,7 @@
   min-height: 0;
   overflow-y: auto;
   width: 100%;
-  background: white;
+  background: #ffffff; /* Slightly off-white background for better contrast */
   font-family: 'DM Sans', sans-serif;
   scroll-behavior: smooth;
 }
@@ -17,7 +17,7 @@
 }
 
 .chat-window::-webkit-scrollbar-thumb {
-  background: var(--border-med, #e2e8f0);
+  background: var(--border-med, #cbd5e1); /* Softer scrollbar */
   border-radius: 4px;
 }
 
@@ -32,25 +32,28 @@
   gap: 20px;
 }
 
+/* --- File Indicators --- */
 .msg-file-indicator {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
 .file-icon { font-size: 16px; }
-.file-icon--pdf { color: #f82323; }
-.file-icon--docx { color: #1e7de2; }
-.file-icon--pptx { color: #ef6a11; }
-.file-icon--xlsx { color: #1fc76e; }
-.file-icon--csv { color: #0c8444; }
-.file-icon--txt { color: #879ec0; }
-.file-icon--default { color: #a0aec0; }
+.file-icon--pdf { color: #ef4444; }
+.file-icon--docx { color: #3b82f6; }
+.file-icon--pptx { color: #f97316; }
+.file-icon--xlsx { color: #10b981; }
+.file-icon--csv { color: #059669; }
+.file-icon--txt { color: #64748b; }
+.file-icon--default { color: #94a3b8; }
 
+/* --- Message Rows --- */
 .msg-row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   animation: msgSlideUp 0.28s ease both;
 }
 
@@ -67,12 +70,8 @@
 }
 
 @keyframes spinIcon {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .spin-icon {
@@ -80,71 +79,80 @@
   transform-origin: center;
 }
 
+/* --- Base Bubble Styles --- */
 .msg-bubble {
   max-width: 82%;
-  padding: 11px 15px;
+  padding: 12px 16px;
   border-radius: 16px;
-  font-size: 14px;
+  font-size: 14.5px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  line-height: 1.65;
+  line-height: 1.6;
   word-break: break-word;
 }
 
-.msg-row--model .msg-bubble {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.05);
-  color: #0f172a;
-  border-bottom-left-radius: 4px;
-  transition: all 0.2s ease-in-out;
+/* --- User Bubble --- */
+.msg-row--user .msg-bubble {
+  background: black; /* Modern Blue Accent */
+  color: #ffffff;
 }
 
-.msg-row--user .msg-bubble {
-  background: var(--accent, #1a1a1a);
-  color: #ffffff;
-  border-bottom-right-radius: 4px;
+/* =========================================
+   AI MODEL BUBBLE (PERFECTED COLORS)
+   ========================================= */
+.msg-row--model .msg-bubble {
+  background: #ffffff;
+  border: 1px solid #dadada;
+  color: #000000; /* Softer text color, better readability than pure black */
+  transition: all 0.2s ease-in-out;
 }
 
 .msg-row--model .msg-bubble p:not(:last-child) {
   margin-bottom: 10px;
 }
 
+/* Headings: Premium Dark instead of Orangered */
 .msg-row--model .msg-bubble h1,
 .msg-row--model .msg-bubble h2,
 .msg-row--model .msg-bubble h3 {
   font-family: 'Instrument Serif', serif;
   font-weight: 600;
-  color: #000000;
+  color: #000000; 
   margin: 16px 0 8px;
   line-height: 1.3;
 }
 
 .msg-row--model .msg-bubble h1 {
-  font-size: 1.4rem;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 6px;
+  font-size: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
 }
 
 .msg-row--model .msg-bubble h2 {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
 }
 
 .msg-row--model .msg-bubble h3 {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
 }
 
-.msg-row--model .msg-bubble strong {
+.msg-row--model .msg-bubble h3 strong{
+  color: black;
+}
+
+/* Fixed Strong Tags (Blue color looks like links, so made it dark) */
+.msg-row--model .msg-bubble strong{
   font-weight: 600;
-  color: #0284c7;
+  color:var(--accent-2);
 }
 
+/* Links */
 .msg-row--model .msg-bubble a {
   color: #2563eb;
   text-decoration: none;
   font-weight: 500;
-  border-bottom: 1.5px solid transparent;
+  border-bottom: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
@@ -153,26 +161,27 @@
   border-bottom-color: #2563eb;
 }
 
+/* Inline Code: Modern Gray BG with Rose Text */
 .msg-row--model .msg-bubble code {
   background: #f1f5f9;
-  color: #d97706;
+  color: #be185d; 
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 2px 7px;
+  border-radius: 4px;
+  padding: 3px 6px;
   font-family: 'Fira Code', 'Consolas', monospace;
   font-size: 13px;
   font-weight: 500;
 }
 
+/* Code Blocks (Pre) */
 .msg-row--model .msg-bubble pre {
   background: #0f172a;
   color: #f8fafc;
   padding: 14px 16px;
   overflow-x: auto;
   margin: 12px 0;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #1e293b;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .msg-row--model .msg-bubble pre code {
@@ -189,28 +198,30 @@
 }
 
 .msg-row--model .msg-bubble pre::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #475569;
   border-radius: 4px;
 }
 
+/* Lists */
 .msg-row--model .msg-bubble ul,
 .msg-row--model .msg-bubble ol {
   padding-left: 20px;
-  margin: 10px 0;
+  margin: 0px;
 }
 
 .msg-row--model .msg-bubble li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .msg-row--model .msg-bubble li::marker {
-  color: #6366f1;
-  font-weight: bold;
+  color: var(--accent-2); /* Premium Indigo */
+  font-weight: 600;
 }
 
+/* Blockquotes */
 .msg-row--model .msg-bubble blockquote {
   margin: 12px 0;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #f8fafc;
   border-left: 4px solid #6366f1;
   color: #475569;
@@ -218,6 +229,7 @@
   border-radius: 0 8px 8px 0;
 }
 
+/* Tables */
 .msg-row--model .msg-bubble table {
   width: 100%;
   border-collapse: collapse;
@@ -226,31 +238,33 @@
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
 .msg-row--model .msg-bubble th {
-  background: #f8fafc;
-  color: #334155;
+  background: #f1f5f9;
+  color: #1e293b;
   font-weight: 600;
   text-align: left;
-  padding: 10px 12px;
-  border-bottom: 2px solid #e2e8f0;
+  padding: 10px 14px;
+  border-bottom: 1px solid #cbd5e1;
 }
 
 .msg-row--model .msg-bubble td {
-  padding: 9px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
 }
 
 .msg-row--model .msg-bubble tr:nth-child(even) {
-  background: #fdfdfd;
+  background: #fcfcfd;
 }
 
 .msg-row--model .msg-bubble tr:last-child td {
   border-bottom: none;
 }
 
+/* --- Typing Indicator --- */
 .msg-bubble--typing {
   display: flex;
   flex-direction: row;
@@ -260,24 +274,19 @@
 }
 
 .msg-bubble--typing span {
-  width: 7px;
-  height: 7px;
-  background-color: #888;
+  width: 6px;
+  height: 6px;
+  background-color: #94a3b8;
   border-radius: 50%;
   animation: typingBounce 1.2s infinite ease-in-out;
 }
 
-.msg-bubble--typing span:nth-child(2) {
-  animation-delay: 0.18s;
-}
-
-.msg-bubble--typing span:nth-child(3) {
-  animation-delay: 0.36s;
-}
+.msg-bubble--typing span:nth-child(2) { animation-delay: 0.18s; }
+.msg-bubble--typing span:nth-child(3) { animation-delay: 0.36s; }
 
 @keyframes typingBounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-5px); opacity: 1; }
+  30% { transform: translateY(-4px); opacity: 1; }
 }
 
 @keyframes msgSlideUp {
@@ -291,11 +300,11 @@
   }
 }
 
+/* --- Mobile Responsiveness --- */
 @media (max-width: 540px) {
   .chat-window-inner {
     padding: 16px 14px 10px;
   }
-
   .msg-bubble {
     max-width: 88%;
   }

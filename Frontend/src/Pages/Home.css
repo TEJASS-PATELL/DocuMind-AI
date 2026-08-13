@@ -322,7 +322,7 @@
 
 .demo-msg--user {
   align-self: flex-end;
-  background: var(--text-primary);
+  background: black;
   color: #fff;
 }
 
