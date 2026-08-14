@@ -52,7 +52,7 @@
 
 .hero-inner {
   flex: 1;
-  max-width: 520px;
+  max-width: 525px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -214,8 +214,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 28px;
-  padding-top: 20px;
+  margin-top: 25px;
   flex-wrap: wrap;
   width: 100%;
 }
@@ -259,7 +258,7 @@
 
 .hero-right {
   flex: 1;
-  max-width: 460px;
+  max-width: 465px;
   display: flex;
   flex-direction: column;
   gap: 16px;

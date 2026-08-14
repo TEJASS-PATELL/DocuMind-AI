@@ -11,6 +11,7 @@ import Footer from "../Components/Footer";
 import "./Home.css";
 import Feature from "../Components/Feature";
 import Working from "../Components/Working";
+import Note from "../Components/Note";
 
 const HomePage = () => {
   // 1. Initial state direct localStorage se set karein (Instant Load)
@@ -161,6 +162,7 @@ const HomePage = () => {
       </section>
       <Working />
       <Feature />
+      <Note />
       <Footer />
     </div>
   );

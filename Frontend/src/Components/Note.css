@@ -1,0 +1,80 @@
+/* NAYA CONTAINER: Isko poore screen ke center mein laane ke liye */
+.note-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0vh; /* Screen ki poori height lega */
+  padding: 0px 0px 120px 0;
+  background: var(--bg); /* Aapki theme ka background color */
+}
+
+/* CARD STYLING: Thoda shadow aur max-width add kiya hai */
+.privacy-guarantee-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  z-index: 999;
+  padding: 20px 0px 20px 20px; /* Thoda padding badha diya card look ke liye */
+  background: white; 
+  border: 1px solid var(--border-med); 
+  border-radius: var(--radius-lg); /* Thoda zyada round kiya (18px) jaisa theme me tha */
+  width: 100%;
+  max-width: 1050px; /* Card ki maximum chaurai (width) fix kar di */
+  transition: 0.3s ease;
+}
+
+.privacy-icon-wrapper {
+  background: var(--accent-light); 
+  color: var(--accent); 
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(42, 92, 69, 0.18); 
+}
+
+.privacy-icon-main {
+  font-size: 15px;
+}
+
+.privacy-text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.privacy-text-content h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.privacy-text-content p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted); 
+}
+
+.privacy-text-content p strong {
+  color: var(--text-primary); 
+  font-weight: 600;
+}
+
+.reload-warning {
+  margin-top: 5px;
+  border-left: 3px solid none; 
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.reload-warning strong {
+  color: var(--accent); 
+  font-weight: 700;
+}
