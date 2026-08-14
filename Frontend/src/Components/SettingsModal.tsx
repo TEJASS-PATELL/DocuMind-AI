@@ -11,9 +11,9 @@ interface SettingsModalProps {
     language: string;
     focusMode: boolean;
     replyType: string;
-    userColor?: string; // NEW: Added userColor
+    userColor?: string; 
   };
-  onSave: (updated: { language: string; focusMode: boolean; replyType: string; userColor: string }) => void; // NEW: Added userColor
+  onSave: (updated: { language: string; focusMode: boolean; replyType: string; userColor: string }) => void; 
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave }) => {
@@ -22,7 +22,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
   const [language, setLanguage] = useState(current.language);
   const [focusMode, setFocusMode] = useState(current.focusMode);
   const [replyType, setReplyType] = useState(current.replyType);
-  const [userColor, setUserColor] = useState(current.userColor || '#000000'); // NEW: State for color, default is black
+  const [userColor, setUserColor] = useState(current.userColor || '#000000'); 
 
   const userName = localStorage.getItem('username') || 'User';
   const email = localStorage.getItem('email') || 'No email found';
