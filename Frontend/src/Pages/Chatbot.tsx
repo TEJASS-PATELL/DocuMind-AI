@@ -24,15 +24,14 @@ const Chatbot: React.FC = () => {
   const [displayedText, setDisplayedText] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // Dropdown menu state
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>(`session-${Date.now()}`);
 
-  // 1. NEW: Added userColor in the settings state
   const [settings, setSettings] = useState({
     language: "english",
     focusMode: false,
     replyType: "concise",
-    userColor: "#000000" // Default color
+    userColor: "#000000"
   });
 
   const isReadyToChat = useMemo(() => userId !== null, [userId]);
@@ -45,7 +44,6 @@ const Chatbot: React.FC = () => {
         const { data } = await api.get("/api/auth/get_detail");
         setUserId(data.id || null);
         
-        // 2. NEW: Fetching userColor from database (if available)
         setSettings({
           language: data.language || "english",
           focusMode: data.focusMode || false,
@@ -252,7 +250,7 @@ const Chatbot: React.FC = () => {
                 messages={messages}
                 displayedText={displayedText}
                 isLoading={isLoading}
-                userColor={settings.userColor} // 3. NEW: Finally passing color to the ChatWindow!
+                userColor={settings.userColor}
               />
 
               <InputArea
@@ -271,7 +269,7 @@ const Chatbot: React.FC = () => {
       {showSettingsModal && (
         <SettingsModal
           onClose={() => setShowSettingsModal(false)}
-          onSave={(updated) => setSettings(updated)} // This will catch the userColor from the modal and save it
+          onSave={(updated) => setSettings(updated)}
           current={settings}
         />
       )}
