@@ -16,6 +16,7 @@ interface ChatWindowProps {
   messages: Message[];
   displayedText: string;
   isLoading: boolean;
+  userColor?: string; // NEW: Accept color as prop from main parent component
 }
 
 
@@ -44,7 +45,7 @@ const getFileIcon = (fileName?: string) => {
   }
 };
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoading }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoading, userColor = '#000000' }) => {
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,9 +59,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
       <div className="chat-window-inner">
         {messages.map((msg, i) => (
           <div key={i} className={`msg-row msg-row--${msg.role}`}>
-            {msg.role === 'model'}
             
-            <div className="msg-bubble">
+            {/* NEW: Using inline styles to apply userColor only to user messages */}
+            <div 
+              className="msg-bubble" 
+              style={msg.role === 'user' ? { backgroundColor: userColor } : {}}
+            >
               {msg.fileName && (
                 <div className="msg-file-indicator">
                   {getFileIcon(msg.fileName)}
@@ -68,6 +72,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
               )}
               {msg.role === 'model' ? <ReactMarkdown>{msg.text}</ReactMarkdown> : <p>{msg.text}</p>}
             </div>
+            
           </div>
         ))}
 

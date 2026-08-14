@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Settings, Globe, MessageSquare, Zap, Save, Trash2 } from 'lucide-react';
+import { X, Settings, Globe, MessageSquare, Zap, Save, Trash2, Palette } from 'lucide-react'; // Added Palette icon
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -11,8 +11,9 @@ interface SettingsModalProps {
     language: string;
     focusMode: boolean;
     replyType: string;
+    userColor?: string; // NEW: Added userColor
   };
-  onSave: (updated: { language: string; focusMode: boolean; replyType: string }) => void;
+  onSave: (updated: { language: string; focusMode: boolean; replyType: string; userColor: string }) => void; // NEW: Added userColor
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave }) => {
@@ -21,6 +22,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
   const [language, setLanguage] = useState(current.language);
   const [focusMode, setFocusMode] = useState(current.focusMode);
   const [replyType, setReplyType] = useState(current.replyType);
+  const [userColor, setUserColor] = useState(current.userColor || '#000000'); // NEW: State for color, default is black
 
   const userName = localStorage.getItem('username') || 'User';
   const email = localStorage.getItem('email') || 'No email found';
@@ -30,7 +32,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
   const handleSubmit = async () => {
     setIsSaving(true);
     try {
-      const updatedSettings = { language, focusMode, replyType };
+      const updatedSettings = { language, focusMode, replyType, userColor }; // Included userColor
       await api.post('/api/auth/update_detail', updatedSettings);
       toast.success('Preferences saved');
       onSave(updatedSettings);
@@ -109,6 +111,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
                 <option value="balanced">Balanced</option>
                 <option value="detailed">Detailed</option>
               </select>
+            </div>
+
+            {/* NEW: Chat Color Picker Field */}
+            <div className="setting-field">
+              <label className="field-label"><Palette size={13} /> Chat Color</label>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <input 
+                  type="color" 
+                  value={userColor} 
+                  onChange={e => setUserColor(e.target.value)} 
+                  style={{ cursor: 'pointer', padding: 0, border: 'none', width: '32px', height: '32px', borderRadius: '4px', background: 'transparent' }}
+                />
+                <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 500 }}>
+                  {userColor.toUpperCase()}
+                </span>
+              </div>
             </div>
 
             <div className="setting-field setting-field--toggle">

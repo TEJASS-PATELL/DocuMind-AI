@@ -13,12 +13,22 @@ import Feature from "../Components/Feature";
 import Working from "../Components/Working";
 
 const HomePage = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 1. Initial state direct localStorage se set karein (Instant Load)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
 
   useEffect(() => {
+    // 2. Background mein API se check karein ki session valid hai ya expire ho gaya
     api.get('/api/auth/check')
-      .then(() => setIsLoggedIn(true))
-      .catch(() => setIsLoggedIn(false));
+      .then(() => {
+        setIsLoggedIn(true);
+        localStorage.setItem("isLoggedIn", "true"); // Sync state
+      })
+      .catch(() => {
+        setIsLoggedIn(false);
+        localStorage.removeItem("isLoggedIn"); // Session expire hone par remove kar dein
+      });
   }, []);
 
   return (
@@ -47,6 +57,7 @@ const HomePage = () => {
           </div>
 
           <div className="cta-group">
+            {/* 3. Ab yahan koi delay ya loading nahi hoga, direct sahi button aayega */}
             {isLoggedIn ? (
               <div className="logged-in-cta">
                 <Link to="/chatbot" className="btn-workspace">
