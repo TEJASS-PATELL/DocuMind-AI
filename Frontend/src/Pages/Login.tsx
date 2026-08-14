@@ -99,9 +99,8 @@ const Login: React.FC = () => {
       </div>
 
       <div className="bottom-system-status">
-        <span className="status-dot" />
         <Sparkles size={11} />
-        <span>System ready · v2.0.5</span>
+        <span>System ready · v3.1</span>
       </div>
     </div>
   );
