@@ -113,10 +113,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
               </select>
             </div>
 
-            {/* NEW: Chat Color Picker Field */}
             <div className="setting-field">
               <label className="field-label"><Palette size={13} /> Chat Color</label>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <input 
                   type="color" 
                   value={userColor} 
