@@ -1,6 +1,6 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const db = require("./db");
+const db = require("./db"); 
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -17,14 +17,14 @@ passport.use(
         const email = profile.emails[0].value;
         const name = profile.displayName;
 
-        const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+        const [existing] = await db.execute("SELECT * FROM aiusers WHERE email = ?", [email]);
         let user;
 
         if (existing.length > 0) {
           user = existing[0];
         } else {
           const [result] = await db.execute(
-            "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+            "INSERT INTO aiusers (name, email, password) VALUES (?, ?, ?)",
             [name, email, ""]
           );
           user = { id: result.insertId, name, email };
