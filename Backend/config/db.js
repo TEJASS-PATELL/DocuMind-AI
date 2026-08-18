@@ -6,15 +6,18 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  ssl: {
+    rejectUnauthorized: false 
+  }
 });
 
 pool.getConnection()
   .then((connection) => {
-    console.log("MySQL Connection Established successfully on Railway!");
+    console.log("MySQL Connection Established successfully!");
     connection.release();
   })
   .catch((err) => {
-    console.error("MySQL Connection Error on Railway:", err);
+    console.error("MySQL Connection Error:", err);
     process.exit(1);
   });
 
