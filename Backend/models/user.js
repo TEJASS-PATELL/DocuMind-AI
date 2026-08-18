@@ -4,19 +4,23 @@ async function ConnectUser() {
   try {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS aiusers (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100),
-        email VARCHAR(100) UNIQUE,
-        password VARCHAR(255),
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
     `);
-    console.log("Users table created successfully.");
+
+    console.log("aiusers table is ready.");
   } catch (err) {
-    console.error("Error creating users table:", err);
+    console.error("Failed to create aiusers table:", err.message);
+    throw err;
   }
 }
 
-ConnectUser();
+ConnectUser().catch(() => {
+  process.exit(1);
+});
 
 module.exports = ConnectUser;
