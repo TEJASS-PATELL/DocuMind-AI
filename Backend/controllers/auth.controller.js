@@ -1,10 +1,10 @@
-const db = require("../config/db"); 
+const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: true,
   sameSite: "none",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
@@ -155,9 +155,7 @@ exports.deleteAccount = async (req, res) => {
   try {
     const userId = req.user?.userid;
     if (!userId) return res.status(401).json({ msg: "Unauthorized" });
-    
     await db.execute("DELETE FROM aiusers WHERE id = ?", [userId]);
-    
     res.clearCookie("token", cookieOptions);
     return res.status(200).json({ msg: "Account deleted", success: true });
   } catch (err) {

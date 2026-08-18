@@ -6,19 +6,30 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
   ssl: {
-    rejectUnauthorized: false 
+    rejectUnauthorized: false
   }
 });
 
-pool.getConnection()
-  .then((connection) => {
+const testConnection = async () => {
+  let connection;
+
+  try {
+    connection = await pool.getConnection();
+    await connection.ping();
     console.log("MySQL Connection Established successfully!");
-    connection.release();
-  })
-  .catch((err) => {
-    console.error("MySQL Connection Error:", err);
+  } catch (error) {
+    console.error("MySQL Connection Error:", error.message);
     process.exit(1);
-  });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+testConnection();
 
 module.exports = pool;
