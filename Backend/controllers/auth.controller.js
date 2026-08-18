@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const db = require("../config/db"); 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -17,7 +17,7 @@ exports.signup = async (req, res) => {
   }
 
   try {
-    const [existingUsers] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    const [existingUsers] = await db.execute("SELECT * FROM aiusers WHERE email = ?", [email]);
     
     if (existingUsers.length > 0) {
       return res.status(400).json({ msg: "User already exists" });
@@ -26,7 +26,7 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await db.execute(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      "INSERT INTO aiusers (name, email, password) VALUES (?, ?, ?)",
       [name, email, hashedPassword]
     );
 
@@ -51,7 +51,7 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const [results] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    const [results] = await db.execute("SELECT * FROM aiusers WHERE email = ?", [email]);
     
     if (results.length === 0) {
       return res.status(400).json({ msg: "User does not exist" });
@@ -120,7 +120,7 @@ exports.user_info = async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
 
   try {
-    const [rows] = await db.execute("SELECT name, email FROM users WHERE id = ?", [req.user.userid]);
+    const [rows] = await db.execute("SELECT name, email FROM aiusers WHERE id = ?", [req.user.userid]);
     if (rows.length === 0) return res.status(404).json({ error: "User not found" });
 
     res.json({
@@ -155,7 +155,9 @@ exports.deleteAccount = async (req, res) => {
   try {
     const userId = req.user?.userid;
     if (!userId) return res.status(401).json({ msg: "Unauthorized" });
-    await db.execute("DELETE FROM users WHERE id = ?", [userId]);
+    
+    await db.execute("DELETE FROM aiusers WHERE id = ?", [userId]);
+    
     res.clearCookie("token", cookieOptions);
     return res.status(200).json({ msg: "Account deleted", success: true });
   } catch (err) {

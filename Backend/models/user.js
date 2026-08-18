@@ -3,7 +3,7 @@ const db = require("../config/db");
 async function ConnectUser() {
   try {
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS users (
+      CREATE TABLE IF NOT EXISTS aiusers (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100),
         email VARCHAR(100) UNIQUE,
