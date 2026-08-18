@@ -3,24 +3,20 @@ const db = require("../config/db");
 async function ConnectUser() {
   try {
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS aiusers (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100),
+        email VARCHAR(100) UNIQUE,
+        password VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
-
-    console.log("aiusers table is ready.");
+    console.log("Users table created successfully.");
   } catch (err) {
-    console.error("Failed to create aiusers table:", err.message);
-    throw err;
+    console.error("Error creating users table:", err);
   }
 }
 
-ConnectUser().catch(() => {
-  process.exit(1);
-});
+ConnectUser();
 
 module.exports = ConnectUser;

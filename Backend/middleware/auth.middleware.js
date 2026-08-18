@@ -1,51 +1,21 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
-  const token = req.cookies?.token;
-
+  const token = req.cookies.token;
+  
   if (!token) {
-    return res.status(401).json({
-      msg: "Not authenticated"
-    });
-  }
-
-  if (!process.env.JWT_SECRET) {
-    return res.status(500).json({
-      msg: "JWT configuration missing"
-    });
+    return res.status(401).json({ msg: "No token, access denied" });
   }
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    const userId =
-      decoded.userid ||
-      decoded.userId ||
-      decoded.id;
-
-    if (!userId) {
-      return res.status(401).json({
-        msg: "Invalid token"
-      });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {
-      userid: userId
+      userid: decoded.userid || decoded.id || decoded.userId
     };
 
     next();
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({
-        msg: "Token expired"
-      });
-    }
-
-    return res.status(401).json({
-      msg: "Invalid token"
-    });
+    return res.status(401).json({ msg: "Invalid token" });
   }
 };
