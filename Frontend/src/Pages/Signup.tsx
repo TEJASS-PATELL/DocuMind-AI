@@ -105,7 +105,7 @@ const Signup: React.FC = () => {
             id="name"
             type="text"
             name="name"
-            placeholder="Tejas Patel"
+            placeholder="your name"
             value={form.name}
             onChange={handleChange}
           />
