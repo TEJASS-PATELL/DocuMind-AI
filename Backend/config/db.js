@@ -1,13 +1,12 @@
 const mysql = require("mysql2/promise");
 require("dotenv").config();
 
-const pool = mysql.createPool({
-  uri: process.env.DATABASE_URL,
+const pool = mysql.createPool(process.env.DATABASE_URL, {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   ssl: {
-    rejectUnauthorized: false 
+    rejectUnauthorized: false
   }
 });
 
@@ -18,7 +17,6 @@ pool.getConnection()
   })
   .catch((err) => {
     console.error("MySQL Connection Error:", err);
-    process.exit(1);
   });
 
 module.exports = pool;
