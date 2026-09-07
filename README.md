@@ -100,7 +100,8 @@ Follow these steps to set up the project locally:
    ```bash
    cd Backend
    npm install
-   # Configure your .env file with MySQL and API credentials
+    # Configure your .env file with MySQL and API credentials.
+    # Set MYSQL_URL (or DATABASE_URL) to the active provider connection URL.
    npm start
 
 3. Configure Frontend
