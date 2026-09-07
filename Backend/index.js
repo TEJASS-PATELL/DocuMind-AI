@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 const cors = require("cors");
 const helmetConfig = require("./middleware/helmet");
 const chatRoutes = require("./routers/chatRoutes");
@@ -8,8 +9,6 @@ const MySQLStore = require('express-mysql-session')(session);
 const pool = require('./config/db');
 const cookieParser = require("cookie-parser");
 const passport = require("./config/passport");
-require("dotenv").config();
-
 const sessionStore = new MySQLStore({}, pool);
 const PORT = process.env.PORT || 5000;
 const app = express();
