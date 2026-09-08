@@ -1,5 +1,5 @@
-<div align="center">
 
+<<<<<<< HEAD
 # 🧠 Brain-Body AI
 ### *Your Personal AI Wellness Assistant — Track, Chat & Transform Your Health*
 
@@ -128,3 +128,5 @@ Feel free to reach out for collaborations or inquiries:
 <div align="center">
 Developed with ❤️ by Tejas Patel. If you find this project useful, please consider giving it a ⭐!
 </div>
+=======
+>>>>>>> 21cce87b87aad876fc63ff4dce9f8941bef9e7f7

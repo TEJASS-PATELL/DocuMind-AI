@@ -26,7 +26,7 @@ const EXTENSION_TO_FILETYPE = {
 const extractTextFromFile = async (buffer, originalName) => {
   const ext = path.extname(originalName || "").toLowerCase();
 
-  if (ext === ".txt") {
+  if ([".txt", ".md", ".html", ".csv"].includes(ext)) {
     const text = buffer.toString("utf-8").trim();
     if (!text) {
       throw new Error("Text file appears to be empty.");
@@ -42,9 +42,8 @@ const extractTextFromFile = async (buffer, originalName) => {
   }
 
   try {
-    const ast = await OfficeParser.parseOffice(buffer, { fileType });
-    const result = await ast.to("text");
-    const text = (result?.value || "").trim();
+    const ast = await OfficeParser.parseOffice(buffer);
+    const text = ast.toText().trim();
     if (!text) {
       throw new Error("No text could be extracted from the file.");
     }
