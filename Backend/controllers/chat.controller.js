@@ -4,6 +4,7 @@ const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 const { OfficeParser } = require("officeparser");
+const { buildChatPrompt } = require("../utils/prompt");
 
 const EMBEDDING_MODEL = "gemini-embedding-001";
 const EMBEDDING_DIM = 1024;
@@ -301,7 +302,16 @@ exports.askQuestion = async (req, res) => {
       console.warn("Similarity search failed:", e.message);
     }
 
-    const prompt = `Context: ${context || "No context available."}\n\nQuestion: ${message}\nAnswer in ${language || "English"}:`;
+    const prompt = buildChatPrompt({
+      context,
+      message,
+      language,
+      focusMode:
+        req.body.focusMode === true ||
+        req.body.focusMode === 1 ||
+        req.body.focusMode === "true",
+      replyType: req.body.replyType,
+    });
     const result = await model.invoke(prompt);
     return res.json({ reply: result.content });
   } catch (error) {
