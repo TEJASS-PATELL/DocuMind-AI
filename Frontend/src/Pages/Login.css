@@ -28,7 +28,7 @@
   background: #FFFFFF;
   border: 1px solid rgba(26,24,20,0.10);
   border-radius: 20px;
-  padding: 44px 40px 36px;
+  padding: 44px 40px 44px;
   width: 100%;
   max-width: 420px;
   animation: cardUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
@@ -223,4 +223,39 @@
   .login-box {
     padding: 36px 24px 28px;
   }
+}
+
+
+/* Demo / Guest button */
+.demo-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2a5c45;
+  background: rgba(42, 92, 69, 0.08);
+  border: 1px dashed #2a5c45;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, color 0.2s ease;
+}
+
+.demo-btn:hover {
+  background: #2a5c45;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.demo-btn:active {
+  transform: translateY(0);
+}
+
+.demo-btn:focus-visible {
+  outline: 2px solid #2a5c45;
+  outline-offset: 2px;
 }

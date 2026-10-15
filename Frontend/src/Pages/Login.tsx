@@ -22,6 +22,17 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleDemo = async () => {
+    try {
+      await api.post('/api/auth/guest');
+      sessionStorage.setItem('guest', 'true');
+      toast.success('Demo mode on. Data save nahi hoga');
+      navigate('/chatbot', { replace: true });
+    } catch {
+      toast.error('Demo start nahi ho paya');
+    }
+  };
+
   const handleGoogleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
   };
@@ -82,7 +93,10 @@ const Login: React.FC = () => {
               required
             />
           </div>
-
+          <button type="button" className="google-btn" onClick={handleDemo}>
+            <Sparkles size={16} />
+            <span>Try Demo (no signup)</span>
+          </button>
           <button type="submit" className="login-btn">Sign in</button>
         </form>
 

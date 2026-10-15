@@ -162,3 +162,14 @@ exports.deleteAccount = async (req, res) => {
     return res.status(500).json({ msg: "Deletion failed", error: err.message });
   }
 };
+
+exports.guest = (req, res) => {
+  const token = jwt.sign(
+    { userid: null, guest: true },
+    process.env.JWT_SECRET,
+    { expiresIn: "2h" }
+  );
+
+  res.cookie("token", token, { ...cookieOptions, maxAge: 2 * 60 * 60 * 1000 });
+  res.json({ msg: "Guest session started", guest: true });
+};

@@ -28,7 +28,7 @@
   background: #FFFFFF;
   border: 1px solid rgba(26,24,20,0.10);
   border-radius: 20px;
-  padding: 44px 40px 36px;
+  padding: 44px 40px 44px;
   width: 100%;
   max-width: 420px;
   animation: cardUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
