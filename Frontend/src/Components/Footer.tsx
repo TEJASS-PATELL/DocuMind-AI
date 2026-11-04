@@ -1,7 +1,7 @@
 import React from 'react';
 import './Footer.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { FaHeart, FaReact } from 'react-icons/fa';
 import { SiLangchain, SiGooglegemini, SiFastapi } from 'react-icons/si';
@@ -9,7 +9,6 @@ import { Trees } from 'lucide-react';
 
 const socialLinks = {
   github: 'https://github.com/TEJASS-PATELL',
-  linkedin: 'https://www.linkedin.com/in/tejasspatell',
   email: 'mailto:tejasspatell2@gmail.com',
 };
 
@@ -37,9 +36,6 @@ const Footer: React.FC = () => {
         <div className="footer-social-icons">
           <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" title="GitHub">
             <FontAwesomeIcon icon={faGithub} />
-          </a>
-          <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn">
-            <FontAwesomeIcon icon={faLinkedin} />
           </a>
           <a href={socialLinks.email} title="Email">
             <FontAwesomeIcon icon={faEnvelope} />
