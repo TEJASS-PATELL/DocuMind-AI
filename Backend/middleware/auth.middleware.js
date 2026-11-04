@@ -9,9 +9,17 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const guest = decoded.guest === true;
+    const userid = decoded.userid || decoded.id || decoded.userId;
+
+    if ((!guest && !userid) || (guest && !decoded.guestId)) {
+      return res.status(401).json({ msg: "Invalid token" });
+    }
 
     req.user = {
-      userid: decoded.userid || decoded.id || decoded.userId
+      userid: userid || null,
+      guest,
+      guestId: guest ? decoded.guestId : null
     };
 
     next();

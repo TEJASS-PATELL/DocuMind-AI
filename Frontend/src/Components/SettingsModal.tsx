@@ -7,6 +7,7 @@ import './SettingsModal.css';
 
 interface SettingsModalProps {
   onClose: () => void;
+  isGuest?: boolean;
   current: {
     language: string;
     focusMode: boolean;
@@ -16,7 +17,7 @@ interface SettingsModalProps {
   onSave: (updated: { language: string; focusMode: boolean; replyType: string; userColor: string }) => void; 
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave, isGuest = false }) => {
   const navigate = useNavigate();
 
   const [language, setLanguage] = useState(current.language);
@@ -24,8 +25,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
   const [replyType, setReplyType] = useState(current.replyType);
   const [userColor, setUserColor] = useState(current.userColor || '#000000'); 
 
-  const userName = localStorage.getItem('username') || 'User';
-  const email = localStorage.getItem('email') || 'No email found';
+  const userName = isGuest ? 'Guest' : localStorage.getItem('username') || 'User';
+  const email = isGuest ? 'Temporary demo session' : localStorage.getItem('email') || 'No email found';
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -149,9 +150,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave 
               <Save size={15} /> {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
 
-            <button className="setting-btn setting-btn--delete-init" onClick={handleDeleteAccount}>
-              <Trash2 size={15} /> Delete Account
-            </button>
+            {!isGuest && (
+              <button className="setting-btn setting-btn--delete-init" onClick={handleDeleteAccount}>
+                <Trash2 size={15} /> Delete Account
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 .login-wrapper {
   min-height: 100vh;
+  min-height: 100svh;
   background: var(--bg, #F7F5F0);
   font-family: 'DM Sans', sans-serif;
   display: flex;
@@ -7,7 +8,9 @@
   justify-content: center;
   padding: 24px;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-items: safe center;
 }
 
 .login-wrapper::before {

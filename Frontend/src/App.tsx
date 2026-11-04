@@ -7,6 +7,8 @@ import api from './api';
 function App() {
 
   useEffect(() => {
+    if (sessionStorage.getItem('guest') === 'true') return;
+
     api.get('/api/auth/userinfo')
       .then(res => {
         localStorage.setItem('username', res.data.name);

@@ -10,6 +10,11 @@ const EMBEDDING_MODEL = "gemini-embedding-001";
 const EMBEDDING_DIM = 1024;
 const processingSessions = new Set();
 
+const getNamespace = (user, sessionId) => {
+  const session = String(sessionId || "default-session");
+  return user.guest ? `guest-${user.guestId}-${session}` : session;
+};
+
 const EXTENSION_TO_FILETYPE = {
   ".pdf": "pdf",
   ".docx": "docx",
@@ -165,7 +170,10 @@ const embedSingleText = async (apiKey, text, retries = 3) => {
 };
 
 exports.uploadDocument = async (req, res) => {
-  const lockKey = String(req.body?.sessionId || "default-session");
+  const user = req.user;
+  const userId = user?.userid || (user?.guest ? `guest:${user.guestId}` : null);
+  const namespace = user ? getNamespace(user, req.body?.sessionId) : null;
+  const lockKey = namespace || String(req.body?.sessionId || "default-session");
 
   if (processingSessions.has(lockKey)) {
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -175,7 +183,6 @@ exports.uploadDocument = async (req, res) => {
 
   try {
     const pineconeIndex = await getPineconeIndex();
-    const userId = req.user?.userid;
     const { sessionId } = req.body;
 
     if (!userId || !req.file) {
@@ -200,7 +207,7 @@ exports.uploadDocument = async (req, res) => {
     });
 
     const safeMetadata = {
-      sessionId: String(sessionId || "default-session"),
+      sessionId: namespace,
       userId: String(userId || "unknown-user"),
       source: String(req.file.originalname || "unknown-file"),
     };
@@ -252,7 +259,7 @@ exports.uploadDocument = async (req, res) => {
       const batch = vectorsToUpsert.slice(i, i + BATCH_SIZE);
       if (batch.length === 0) continue;
       await pineconeIndex
-        .namespace(String(sessionId || "default-session"))
+        .namespace(namespace)
         .upsert({ records: batch });
     }
 
@@ -278,6 +285,9 @@ exports.askQuestion = async (req, res) => {
     if (!message || message.trim().length === 0) {
       return res.status(400).json({ reply: "Message cannot be empty." });
     }
+    if (!req.user) {
+      return res.status(401).json({ reply: "Authentication required." });
+    }
 
     const model = getModel(apiKey);
 
@@ -287,7 +297,7 @@ exports.askQuestion = async (req, res) => {
       const queryVector = await embedSingleText(apiKey, message);
 
       const searchResult = await pineconeIndex
-        .namespace(String(sessionId || "default-session"))
+        .namespace(getNamespace(req.user, sessionId))
         .query({
           vector: queryVector,
           topK: 4,

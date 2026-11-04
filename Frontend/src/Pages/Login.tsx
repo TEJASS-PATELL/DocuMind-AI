@@ -9,12 +9,14 @@ import { Sparkles } from 'lucide-react';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isStartingDemo, setIsStartingDemo] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await api.post('/api/auth/login', { email, password });
+      sessionStorage.removeItem('guest');
       toast.success('Login successful! Welcome back');
       navigate('/chatbot', { replace: true });
     } catch {
@@ -23,13 +25,17 @@ const Login: React.FC = () => {
   };
 
   const handleDemo = async () => {
+    if (isStartingDemo) return;
+    setIsStartingDemo(true);
     try {
       await api.post('/api/auth/guest');
       sessionStorage.setItem('guest', 'true');
       toast.success('Demo mode on. Data save nahi hoga');
       navigate('/chatbot', { replace: true });
     } catch {
-      toast.error('Demo start nahi ho paya');
+      toast.error('Demo start nahi ho paya. Please dobara try karein.');
+    } finally {
+      setIsStartingDemo(false);
     }
   };
 
@@ -93,9 +99,9 @@ const Login: React.FC = () => {
               required
             />
           </div>
-          <button type="button" className="google-btn" onClick={handleDemo}>
+          <button type="button" className="google-btn" onClick={handleDemo} disabled={isStartingDemo}>
             <Sparkles size={16} />
-            <span>Try Demo (no signup)</span>
+            <span>{isStartingDemo ? 'Starting demo...' : 'Try Demo (no signup)'}</span>
           </button>
           <button type="submit" className="login-btn">Sign in</button>
         </form>

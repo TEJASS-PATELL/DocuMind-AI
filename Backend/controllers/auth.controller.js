@@ -1,11 +1,12 @@
 const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { randomUUID } = require("crypto");
 
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "none",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -101,7 +102,7 @@ exports.update_detail = (req, res) => {
 
 exports.get_detail = (req, res) => {
   if (!req.user) {
-    return res.json({ id: null, language: "english", focusMode: false, replyType: "concise" });
+    return res.json({ id: null, guest: false, language: "english", focusMode: false, replyType: "concise" });
   }
 
   const lang = (req.session && req.session.language) ? req.session.language : "english";
@@ -110,6 +111,7 @@ exports.get_detail = (req, res) => {
 
   res.json({
     id: req.user.userid,
+    guest: req.user.guest === true,
     language: lang,
     replyType: reply,
     focusMode: !!focus
@@ -165,11 +167,11 @@ exports.deleteAccount = async (req, res) => {
 
 exports.guest = (req, res) => {
   const token = jwt.sign(
-    { userid: null, guest: true },
+    { userid: null, guest: true, guestId: randomUUID() },
     process.env.JWT_SECRET,
     { expiresIn: "2h" }
   );
 
-  res.cookie("token", token, { ...cookieOptions, maxAge: 2 * 60 * 60 * 1000 });
+  jjjjjjres.cookie("token", token, { ...cookieOptions, maxAge: 2 * 60 * 60 * 1000 });
   res.json({ msg: "Guest session started", guest: true });
 };

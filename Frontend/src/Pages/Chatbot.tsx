@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import ChatWindow from "../Components/ChatWindow";
 import InputArea from "../Components/InputArea";
 import { Settings, LogOut, X, MessageSquarePlus, SlidersHorizontal } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Message {
   role: "user" | "model";
@@ -23,6 +24,7 @@ const Chatbot: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [displayedText, setDisplayedText] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>(`session-${Date.now()}`);
@@ -34,8 +36,8 @@ const Chatbot: React.FC = () => {
     userColor: "#000000"
   });
 
-  const isReadyToChat = useMemo(() => userId !== null, [userId]);
-  const username = localStorage.getItem("username") || "there";
+  const isReadyToChat = useMemo(() => userId !== null || isGuest, [userId, isGuest]);
+  const username = isGuest ? "Guest" : localStorage.getItem("username") || "there";
   const isEmptyState = messages.length === 0 && !displayedText;
 
   useEffect(() => {
@@ -43,6 +45,7 @@ const Chatbot: React.FC = () => {
       try {
         const { data } = await api.get("/api/auth/get_detail");
         setUserId(data.id || null);
+        setIsGuest(data.guest === true);
         
         setSettings({
           language: data.language || "english",
@@ -52,6 +55,7 @@ const Chatbot: React.FC = () => {
         });
       } catch {
         setUserId(null);
+        setIsGuest(false);
       }
     };
     initChatbot();
@@ -80,10 +84,11 @@ const Chatbot: React.FC = () => {
     setDisplayedText("");
 
     typingIntervalRef.current = setInterval(() => {
-      setDisplayedText(prev => prev + fullText[index]);
       index++;
+      setDisplayedText(fullText.slice(0, index));
       if (index >= fullText.length) {
         if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
         setMessages(prev => [...prev, { role: "model", text: fullText }]);
         setDisplayedText("");
       }
@@ -145,9 +150,13 @@ const Chatbot: React.FC = () => {
   const handleLogout = async () => {
     try {
       await api.post("/api/auth/logout");
+      sessionStorage.removeItem("guest");
+      localStorage.removeItem("username");
+      localStorage.removeItem("email");
+      localStorage.removeItem("isLoggedIn");
       navigate("/login", { replace: true });
-    } catch (err) {
-      console.error(err);
+    } catch {
+      toast.error("Sign out nahi ho paya. Please dobara try karein.");
     }
   };
 
@@ -271,6 +280,7 @@ const Chatbot: React.FC = () => {
           onClose={() => setShowSettingsModal(false)}
           onSave={(updated) => setSettings(updated)}
           current={settings}
+          isGuest={isGuest}
         />
       )}
     </div>
