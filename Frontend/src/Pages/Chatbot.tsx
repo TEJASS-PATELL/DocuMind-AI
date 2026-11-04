@@ -15,12 +15,54 @@ interface Message {
   fileName?: string;
 }
 
+interface ChatState {
+  sessionId: string;
+  messages: Message[];
+}
+
 interface ChatSettings {
   language: string;
   focusMode: boolean;
   replyType: string;
   userColor: string;
 }
+
+const CHAT_STATE_KEY = "documindChatState";
+
+const readSavedChatState = (): ChatState | null => {
+  const savedChat = sessionStorage.getItem(CHAT_STATE_KEY);
+  if (!savedChat) return null;
+
+  try {
+    const parsed: unknown = JSON.parse(savedChat);
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !("sessionId" in parsed) ||
+      typeof parsed.sessionId !== "string" ||
+      !("messages" in parsed) ||
+      !Array.isArray(parsed.messages) ||
+      !parsed.messages.every(
+        (message): message is Message =>
+          typeof message === "object" &&
+          message !== null &&
+          "role" in message &&
+          (message.role === "user" || message.role === "model") &&
+          "text" in message &&
+          typeof message.text === "string"
+      )
+    ) {
+      sessionStorage.removeItem(CHAT_STATE_KEY);
+      return null;
+    }
+
+    return { sessionId: parsed.sessionId, messages: parsed.messages };
+  } catch (error) {
+    console.error("Could not read saved chat:", error);
+    sessionStorage.removeItem(CHAT_STATE_KEY);
+    return null;
+  }
+};
 
 const readSavedSettings = (): Partial<ChatSettings> => {
   const savedSettings = localStorage.getItem("chatSettings");
@@ -39,7 +81,16 @@ const Chatbot: React.FC = () => {
   const navigate = useNavigate();
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatState, setChatState] = useState<ChatState>(
+    () => readSavedChatState() ?? { sessionId: `session-${Date.now()}`, messages: [] }
+  );
+  const { messages, sessionId } = chatState;
+  const setMessages = (update: React.SetStateAction<Message[]>) => {
+    setChatState((current) => ({
+      ...current,
+      messages: typeof update === "function" ? update(current.messages) : update,
+    }));
+  };
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [displayedText, setDisplayedText] = useState("");
@@ -47,7 +98,6 @@ const Chatbot: React.FC = () => {
   const [isGuest, setIsGuest] = useState(() => sessionStorage.getItem("guest") === "true");
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [sessionId, setSessionId] = useState<string>(`session-${Date.now()}`);
 
   const [settings, setSettings] = useState({
     language: "english",
@@ -59,6 +109,14 @@ const Chatbot: React.FC = () => {
   const isReadyToChat = useMemo(() => userId !== null || isGuest, [userId, isGuest]);
   const username = isGuest || userId === null ? "Guest" : localStorage.getItem("username") || "Guest";
   const isEmptyState = messages.length === 0 && !displayedText;
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CHAT_STATE_KEY, JSON.stringify(chatState));
+    } catch (error) {
+      console.error("Could not save chat:", error);
+    }
+  }, [chatState]);
 
   useEffect(() => {
     const initChatbot = async () => {
@@ -91,9 +149,8 @@ const Chatbot: React.FC = () => {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    setMessages([]);
     setDisplayedText("");
-    setSessionId(`session-${Date.now()}`);
+    setChatState({ sessionId: `session-${Date.now()}`, messages: [] });
   };
 
   const typeMessage = (fullText: string) => {
