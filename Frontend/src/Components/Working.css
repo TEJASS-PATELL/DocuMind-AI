@@ -128,13 +128,13 @@
   color: var(--text-muted);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .section-how {
     padding: 72px 0 64px;
   }
 
   .steps-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .section-sub {
@@ -143,6 +143,10 @@
 }
 
 @media (max-width: 540px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+
   .section-inner {
     padding: 0 20px;
   }

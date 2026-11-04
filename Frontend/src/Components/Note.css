@@ -3,9 +3,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 0vh; /* Screen ki poori height lega */
-  padding: 0px 0px 120px 0;
-  background: var(--bg); /* Aapki theme ka background color */
+  min-height: 0;
+  padding: 24px clamp(20px, 5vw, 48px) 48px;
+  background: var(--bg);
 }
 
 /* CARD STYLING: Thoda shadow aur max-width add kiya hai */
@@ -14,12 +14,12 @@
   align-items: flex-start;
   gap: 16px;
   z-index: 999;
-  padding: 20px 0px 20px 20px; /* Thoda padding badha diya card look ke liye */
+  padding: 20px;
   background: white; 
   border: 1px solid var(--border-med); 
-  border-radius: var(--radius-lg); /* Thoda zyada round kiya (18px) jaisa theme me tha */
+  border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 1050px; /* Card ki maximum chaurai (width) fix kar di */
+  max-width: 1050px;
   transition: 0.3s ease;
 }
 
@@ -77,4 +77,20 @@
 .reload-warning strong {
   color: var(--accent); 
   font-weight: 700;
+}
+
+@media (max-width: 540px) {
+  .note-container {
+    padding: 16px 16px 32px;
+  }
+
+  .privacy-guarantee-box {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .privacy-text-content p,
+  .reload-warning {
+    font-size: 13px;
+  }
 }

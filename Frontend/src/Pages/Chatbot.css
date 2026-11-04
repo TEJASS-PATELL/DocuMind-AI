@@ -10,7 +10,9 @@ body,
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100vw;
+  height: 100dvh;
+  width: 100%;
+  min-width: 0;
   background-color: white;
   overflow: hidden;
   position: relative;
@@ -266,9 +268,13 @@ body,
 }
 
 @media (max-width: 540px) {
+  .container {
+    min-height: 0;
+  }
+
   .top-menu-wrapper {
     top: 12px;
-    right: 14px;
+    right: 10px;
   }
 
   .user-avatar-btn {
@@ -278,10 +284,35 @@ body,
   }
 
   .empty-greeting {
-    font-size: 24px;
+    gap: 8px;
+    font-size: clamp(22px, 6vw, 28px);
+  }
+
+  .empty-greeting svg {
+    width: 42px;
+    height: 42px;
   }
 
   .empty-subtitle {
     font-size: 13.5px;
+  }
+
+  .empty-state {
+    padding: 20px 12px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .empty-state {
+    align-items: flex-start;
+  }
+
+  .empty-state-inner {
+    gap: 10px;
+  }
+
+  .empty-greeting svg {
+    width: 36px;
+    height: 36px;
   }
 }

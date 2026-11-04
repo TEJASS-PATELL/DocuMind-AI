@@ -19,6 +19,7 @@
   width: 100%;
   max-width: 420px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   box-shadow: 0 24px 60px rgba(26, 24, 20, 0.18), 0 4px 16px rgba(26, 24, 20, 0.08);
   animation: panelIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -108,6 +109,31 @@
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     max-height: 85vh;
+    max-height: 85dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .modal-header {
+    padding: 18px 18px 16px;
+  }
+
+  .setting-profile {
+    padding: 18px;
+  }
+
+  .setting-section-label {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .setting-fields {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .setting-actions {
+    padding-right: 18px;
+    padding-left: 18px;
   }
 }
 

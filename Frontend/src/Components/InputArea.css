@@ -208,7 +208,7 @@
 
 @media (max-width: 540px) {
   .input-area {
-    padding: 10px 12px 14px;
+    padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
     max-width: 100%;
   }
 
@@ -224,5 +224,14 @@
     border-radius: 22px;
     padding: 8px 10px 8px 14px;
   }
-}
 
+  .input-textarea {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .input-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
