@@ -44,7 +44,7 @@ const Chatbot: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [displayedText, setDisplayedText] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
-  const [isGuest, setIsGuest] = useState(false);
+  const [isGuest, setIsGuest] = useState(() => sessionStorage.getItem("guest") === "true");
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>(`session-${Date.now()}`);
@@ -57,7 +57,7 @@ const Chatbot: React.FC = () => {
   });
 
   const isReadyToChat = useMemo(() => userId !== null || isGuest, [userId, isGuest]);
-  const username = isGuest ? "Guest" : localStorage.getItem("username") || "there";
+  const username = isGuest || userId === null ? "Guest" : localStorage.getItem("username") || "Guest";
   const isEmptyState = messages.length === 0 && !displayedText;
 
   useEffect(() => {
@@ -76,7 +76,7 @@ const Chatbot: React.FC = () => {
         });
       } catch {
         setUserId(null);
-        setIsGuest(false);
+        setIsGuest(sessionStorage.getItem("guest") === "true");
       }
     };
     initChatbot();
