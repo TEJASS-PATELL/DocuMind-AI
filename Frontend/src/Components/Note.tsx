@@ -18,11 +18,6 @@ function Note() {
                         </p>
                     </p>
 
-                    <div className="reload-warning">
-                        <strong>Important:</strong> Do not reload or refresh the page while working.
-                        Since no data is saved on our servers, refreshing will instantly erase your
-                        uploaded files and current chat.
-                    </div>
                 </div>
             </div>
         </div>

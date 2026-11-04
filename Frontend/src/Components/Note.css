@@ -66,19 +66,6 @@
   font-weight: 600;
 }
 
-.reload-warning {
-  margin-top: 5px;
-  border-left: 3px solid none; 
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-.reload-warning strong {
-  color: var(--accent); 
-  font-weight: 700;
-}
-
 @media (max-width: 540px) {
   .note-container {
     padding: 16px 16px 32px;
@@ -89,8 +76,7 @@
     padding: 16px;
   }
 
-  .privacy-text-content p,
-  .reload-warning {
+  .privacy-text-content p {
     font-size: 13px;
   }
 }
