@@ -240,7 +240,7 @@
   }
 
   .login-box .logo-top-left {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
   .login-box .login-title {
@@ -248,12 +248,12 @@
   }
 
   .login-box .login-subtitle {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     line-height: 1.5;
   }
 
   .login-box .login-form {
-    gap: 12px;
+    gap: 10px;
   }
 
   .login-box .form-group input {
@@ -269,11 +269,11 @@
   }
 
   .login-box .divider-line {
-    margin: 12px 0;
+    margin: 10px 0;
   }
 
   .login-box .signup-text {
-    margin-top: 14px;
+    margin-top: 12px;
     line-height: 1.5;
   }
 
