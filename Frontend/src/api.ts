@@ -8,4 +8,12 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use((config) => {
+  const guestToken = sessionStorage.getItem("guestToken");
+  if (guestToken) {
+    config.headers.Authorization = `Bearer ${guestToken}`;
+  }
+  return config;
+});
+
 export default api;

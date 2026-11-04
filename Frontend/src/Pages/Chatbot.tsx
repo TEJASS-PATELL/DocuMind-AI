@@ -172,6 +172,7 @@ const Chatbot: React.FC = () => {
     try {
       await api.post("/api/auth/logout");
       sessionStorage.removeItem("guest");
+      sessionStorage.removeItem("guestToken");
       localStorage.removeItem("username");
       localStorage.removeItem("email");
       localStorage.removeItem("isLoggedIn");

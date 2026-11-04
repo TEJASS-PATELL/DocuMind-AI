@@ -17,6 +17,7 @@ const Login: React.FC = () => {
     try {
       await api.post('/api/auth/login', { email, password });
       sessionStorage.removeItem('guest');
+      sessionStorage.removeItem('guestToken');
       toast.success('Login successful! Welcome back');
       navigate('/chatbot', { replace: true });
     } catch {
@@ -28,7 +29,11 @@ const Login: React.FC = () => {
     if (isStartingDemo) return;
     setIsStartingDemo(true);
     try {
-      await api.post('/api/auth/guest');
+      const { data } = await api.post('/api/auth/guest');
+      if (!data.token) {
+        throw new Error('Demo session token missing');
+      }
+      sessionStorage.setItem('guestToken', data.token);
       sessionStorage.setItem('guest', 'true');
       toast.success('Demo mode on. Data save nahi hoga');
       navigate('/chatbot', { replace: true });
