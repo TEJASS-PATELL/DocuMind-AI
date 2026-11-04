@@ -2,6 +2,7 @@ const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { randomUUID } = require("crypto");
+const ensureUserTable = require("../models/user");
 
 const cookieOptions = {
   httpOnly: true,
@@ -18,6 +19,7 @@ exports.signup = async (req, res) => {
   }
 
   try {
+    await ensureUserTable();
     const [existingUsers] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
     
     if (existingUsers.length > 0) {
@@ -52,6 +54,7 @@ exports.login = async (req, res) => {
   }
 
   try {
+    await ensureUserTable();
     const [results] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
     
     if (results.length === 0) {
@@ -80,23 +83,11 @@ exports.login = async (req, res) => {
 
 exports.update_detail = (req, res) => {
   const { language, focusMode, replyType } = req.body;
-
-  if (!req.session) {
-    return res.status(500).json({ message: "Session missing" });
-  }
-
-  req.session.language = language || "english";
-  req.session.replyType = replyType || "concise";
-  req.session.focusMode = focusMode === true || focusMode === 1;
-
-  req.session.save((err) => {
-    if (err) return res.status(500).json({ message: "Session save fail" });
-    res.json({
-      message: "Preferences updated",
-      language: req.session.language,
-      replyType: req.session.replyType,
-      focusMode: req.session.focusMode,
-    });
+  res.json({
+    message: "Preferences accepted",
+    language: language || "english",
+    replyType: replyType || "concise",
+    focusMode: focusMode === true || focusMode === 1,
   });
 };
 
@@ -105,16 +96,12 @@ exports.get_detail = (req, res) => {
     return res.json({ id: null, guest: false, language: "english", focusMode: false, replyType: "concise" });
   }
 
-  const lang = (req.session && req.session.language) ? req.session.language : "english";
-  const reply = (req.session && req.session.replyType) ? req.session.replyType : "concise";
-  const focus = (req.session && req.session.focusMode) ? req.session.focusMode : false;
-
   res.json({
     id: req.user.userid,
     guest: req.user.guest === true,
-    language: lang,
-    replyType: reply,
-    focusMode: !!focus
+    language: "english",
+    replyType: "concise",
+    focusMode: false
   });
 };
 
@@ -122,15 +109,13 @@ exports.user_info = async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
 
   try {
+    await ensureUserTable();
     const [rows] = await db.execute("SELECT name, email FROM users WHERE id = ?", [req.user.userid]);
     if (rows.length === 0) return res.status(404).json({ error: "User not found" });
 
     res.json({
       name: rows[0].name,
       email: rows[0].email,
-      language: req.session?.language || "english",
-      focusMode: !!req.session?.focusMode,
-      replyType: req.session?.replyType || "concise"
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch" });
@@ -157,6 +142,7 @@ exports.deleteAccount = async (req, res) => {
   try {
     const userId = req.user?.userid;
     if (!userId) return res.status(401).json({ msg: "Unauthorized" });
+    await ensureUserTable();
     await db.execute("DELETE FROM users WHERE id = ?", [userId]);
     res.clearCookie("token", cookieOptions);
     return res.status(200).json({ msg: "Account deleted", success: true });
@@ -172,6 +158,6 @@ exports.guest = (req, res) => {
     { expiresIn: "2h" }
   );
 
-  jjjjjjres.cookie("token", token, { ...cookieOptions, maxAge: 2 * 60 * 60 * 1000 });
+  res.cookie("token", token, { ...cookieOptions, maxAge: 2 * 60 * 60 * 1000 });
   res.json({ msg: "Guest session started", guest: true });
 };

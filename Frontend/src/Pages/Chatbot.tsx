@@ -15,6 +15,26 @@ interface Message {
   fileName?: string;
 }
 
+interface ChatSettings {
+  language: string;
+  focusMode: boolean;
+  replyType: string;
+  userColor: string;
+}
+
+const readSavedSettings = (): Partial<ChatSettings> => {
+  const savedSettings = localStorage.getItem("chatSettings");
+  if (!savedSettings) return {};
+
+  try {
+    return JSON.parse(savedSettings) as Partial<ChatSettings>;
+  } catch (error) {
+    console.error("Could not read saved chat settings:", error);
+    localStorage.removeItem("chatSettings");
+    return {};
+  }
+};
+
 const Chatbot: React.FC = () => {
   const navigate = useNavigate();
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -44,14 +64,15 @@ const Chatbot: React.FC = () => {
     const initChatbot = async () => {
       try {
         const { data } = await api.get("/api/auth/get_detail");
+        const localSettings = readSavedSettings();
         setUserId(data.id || null);
         setIsGuest(data.guest === true);
         
         setSettings({
-          language: data.language || "english",
-          focusMode: data.focusMode || false,
-          replyType: data.replyType || "concise",
-          userColor: data.userColor || "#000000"
+          language: localSettings.language || data.language || "english",
+          focusMode: localSettings.focusMode ?? data.focusMode ?? false,
+          replyType: localSettings.replyType || data.replyType || "concise",
+          userColor: localSettings.userColor || data.userColor || "#000000"
         });
       } catch {
         setUserId(null);

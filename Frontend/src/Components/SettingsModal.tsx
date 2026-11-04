@@ -34,7 +34,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, current, onSave,
     setIsSaving(true);
     try {
       const updatedSettings = { language, focusMode, replyType, userColor }; // Included userColor
-      await api.post('/api/auth/update_detail', updatedSettings);
+      localStorage.setItem('chatSettings', JSON.stringify(updatedSettings));
       toast.success('Preferences saved');
       onSave(updatedSettings);
       onClose();

@@ -1,6 +1,7 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const db = require("./db");
+const ensureUserTable = require("../models/user");
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -16,6 +17,7 @@ passport.use(
       try {
         const email = profile.emails[0].value;
         const name = profile.displayName;
+        await ensureUserTable();
 
         const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
         let user;
