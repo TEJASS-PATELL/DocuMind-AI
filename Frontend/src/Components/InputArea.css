@@ -117,7 +117,7 @@
 
 .input-shell {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   min-width: 0;
   background: var(--bg-card);
@@ -228,7 +228,7 @@
   }
 
   .input-textarea {
-    font-size: 16px;
+    font-size: 13px;
     line-height: 1.5;
   }
 
