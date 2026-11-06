@@ -8,16 +8,12 @@ function Note() {
 
 
                 <div className="privacy-text-content">
-                    <h4>100% Privacy & Session Note</h4>
-
+                    <h4>Privacy & Session Note</h4>
                     <p>
-                        <p>
-                            <strong>No Databases. No Chat History.</strong> As a RAG-based
-                            chatbot, your PDFs and documents are processed in real-time via Pinecone
-                            & Gemini. We never save your data.
-                        </p>
+                        <strong>No server-side chat history.</strong> Chat messages stay in your
+                        browser session. Document content is processed with Gemini and indexed in
+                        Pinecone so DocuMind can retrieve it while answering questions.
                     </p>
-
                 </div>
             </div>
         </div>

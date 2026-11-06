@@ -7,14 +7,13 @@ interface UploadedFile {
     name: string;
     size: string;
     type: string;
-    raw: File;
 }
 
 interface InputAreaProps {
     userInput: string;
     setUserInput: (input: string) => void;
     handleSendMessage: () => void;
-    handleFileUpload: (file: File) => void;
+    handleFileUpload: (file: File) => Promise<void>;
     isLoading: boolean;
     isReadyToChat: boolean;
 }
@@ -58,21 +57,20 @@ const InputArea: React.FC<InputAreaProps> = ({
         }
     };
 
-    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (isLoading) return;
         const files = Array.from(e.target.files || []);
-        files.forEach(file => {
-            const entry: UploadedFile = {
-                id: `${file.name}-${Date.now()}`,
+        const entries: UploadedFile[] = files.map((file, index) => ({
+                id: `${file.name}-${Date.now()}-${index}`,
                 name: file.name,
                 size: fmtSize(file.size),
                 type: file.type,
-                raw: file,
-            };
-            setUploadedFiles(prev => [...prev, entry]);
-            handleFileUpload(file); 
-        });
+            }));
+        setUploadedFiles(prev => [...prev, ...entries]);
         e.target.value = '';
+        for (const file of files) {
+            await handleFileUpload(file);
+        }
     };
 
     const removeFile = (id: string) => {
@@ -111,7 +109,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                     type="file"
                     ref={fileInputRef}
                     onChange={onFileChange}
-                    accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.png,.jpg,.jpeg,.svg,.webp,.gif,.tif,.tiff,.avif,image/*"
+                    accept=".pdf,.docx,.txt,.pptx,.xlsx,.odt,.odp,.ods,.rtf,.md,.html,.csv,.png,.jpg,.jpeg,.svg,.webp,.gif,.tif,.tiff,.avif,image/*"
                     multiple
                     style={{ display: 'none' }}
                 />

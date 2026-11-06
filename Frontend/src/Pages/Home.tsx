@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FaFileAlt, FaShieldAlt, FaArrowRight, FaBolt,
-  FaBrain, FaFilePdf, FaFileWord, FaFilePowerpoint,
+  FaBrain, FaFilePdf, FaFileWord, FaFilePowerpoint, FaFileImage,
   FaCheckCircle
 } from "react-icons/fa";
 import { SiGooglegemini } from "react-icons/si";
@@ -47,8 +47,8 @@ const HomePage = () => {
           </h1>
 
           <p className="hero-sub">
-            Upload PDFs, research papers, or docs and get instant, accurate answers.
-            Powered by semantic search and multi-modal AI that reads text, tables, and charts.
+            Upload PDFs, research papers, documents, or images and get instant, accurate answers.
+            Our multi-modal AI processes image content, text, tables, and charts.
           </p>
 
           <div className="feature-pills">
@@ -87,6 +87,7 @@ const HomePage = () => {
               <span className="format-item"><FaFileWord className="fmt-word" />Word</span>
               <span className="format-item"><FaFilePowerpoint className="fmt-ppt" />PPT</span>
               <span className="format-item"><FaFileAlt className="fmt-txt" />TXT</span>
+              <span className="format-item"><FaFileImage />Images</span>
               <span className="format-item fmt-more">+ more</span>
             </div>
           </div>

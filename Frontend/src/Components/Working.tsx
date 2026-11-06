@@ -19,7 +19,7 @@ function Working() {
             number: "03",
             icon: <FaComments />,
             title: "Ask anything, Get answers",
-            desc: "Type a question in plain language. DocuMind retrieves relevant passages and generates cited responses.",
+            desc: "Type a question in plain language. DocuMind retrieves relevant passages and grounds its answers in your content.",
         },
     ];
 

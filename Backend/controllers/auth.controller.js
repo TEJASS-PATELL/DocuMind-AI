@@ -23,7 +23,7 @@ exports.signup = async (req, res) => {
     const [existingUsers] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
     
     if (existingUsers.length > 0) {
-      return res.status(400).json({ msg: "User already exists" });
+      return res.status(409).json({ msg: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

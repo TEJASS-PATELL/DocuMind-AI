@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import './Signup.css';
 import toast from 'react-hot-toast';
 import { useNavigate, Link } from 'react-router-dom';
@@ -56,8 +57,8 @@ const Signup: React.FC = () => {
       });
       toast.success('Welcome to DocuMind AI');
       navigate('/chatbot', { replace: true });
-    } catch (err: any) {
-      if (err.response?.status === 409) {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
         toast.error('Email already registered. Try logging in.');
       } else {
         toast.error('Something went wrong. Please try again.');

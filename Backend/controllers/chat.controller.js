@@ -1,6 +1,7 @@
 const path = require("path");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
 const fs = require("fs");
+const { pathToFileURL } = require("node:url");
 const { getPineconeIndex } = require("../config/pinecone");
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
@@ -11,6 +12,11 @@ const { buildChatPrompt, buildLanguageInstruction } = require("../utils/prompt")
 const EMBEDDING_MODEL = "gemini-embedding-001";
 const IMAGE_MODEL = "gemini-3.5-flash-lite";
 const EMBEDDING_DIM = 1024;
+const PDF_WORKER_URL = pathToFileURL(
+  require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs", {
+    paths: [path.dirname(require.resolve("officeparser"))],
+  })
+).href;
 const processingSessions = new Set();
 const IMAGE_EXTENSIONS = new Set([
   ".avif",
@@ -119,7 +125,9 @@ const extractTextFromFile = async (buffer, originalName) => {
   }
 
   try {
-    const ast = await OfficeParser.parseOffice(buffer);
+    const ast = await OfficeParser.parseOffice(buffer, {
+      pdfWorkerSrc: PDF_WORKER_URL,
+    });
     const text = ast.toText().trim();
     if (!text) {
       throw new Error("No text could be extracted from the file.");

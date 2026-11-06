@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { FaHeart, FaReact } from 'react-icons/fa';
-import { SiLangchain, SiGooglegemini, SiFastapi } from 'react-icons/si';
+import { SiLangchain, SiGooglegemini, SiExpress } from 'react-icons/si';
 import { Trees } from 'lucide-react';
 
 const socialLinks = {
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
 
         <div className="footer-tech-stack">
           <span><FaReact size={14} /> React</span>
-          <span><SiFastapi size={14} /> FastAPI</span>
+          <span><SiExpress size={14} /> Express</span>
           <span><SiLangchain size={14} /> LangChain</span>
           <span><SiGooglegemini size={14} /> Gemini</span>
           <span><Trees size={14} /> Pinecone</span>
