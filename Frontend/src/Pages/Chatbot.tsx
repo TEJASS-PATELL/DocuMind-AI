@@ -330,10 +330,10 @@ const Chatbot: React.FC = () => {
                       <circle cx="0" cy="0" r="16" fill="#FFFFFF" />
                     </g>
                   </svg>
-                  <span>Meet DocuDost, your document sidekick, <strong>{username}</strong>!</span>
+                  <span>Ready to analyze your docs, <strong>{username}</strong>?</span>
                 </h1>
                 <p className="empty-subtitle">
-                  Upload a document and ask away. I'll do the reading — your coffee can supervise.
+                  Upload a document and ask me anything — I'll read it and find the best answers for you.
                 </p>
 
                 <InputArea
