@@ -303,6 +303,11 @@ body,
     font-size: clamp(22px, 6vw, 28px);
     line-height: 1.15;
     text-align: center;
+    position: sticky;
+    top: calc(46px + env(safe-area-inset-top));
+    z-index: 2;
+    padding: 6px 0;
+    background: #ffffff;
   }
 
   .empty-greeting svg {
