@@ -21,8 +21,42 @@ const REPLY_INSTRUCTIONS = {
   detailed: "Give a complete, well-organized answer. Include relevant caveats, examples, or steps, but avoid repetition.",
 };
 
+const getOutputLanguage = (language) =>
+  LANGUAGE_NAMES[String(language || "english").trim().toLowerCase()] || "English";
+
+const buildLanguageInstruction = (language) => {
+  const selectedLanguage = String(language || "english").trim().toLowerCase();
+  const outputLanguage = getOutputLanguage(selectedLanguage);
+
+  if (selectedLanguage === "english") {
+    return [
+      "The user's selected response language is English. This is a strict requirement for every response.",
+      "Write all explanations, greetings, headings, and follow-up questions in standard English only.",
+      "Do not switch to, mix in, or transliterate Hindi or Hinglish, even if the user writes in Hindi or Hinglish.",
+      "Do not mirror the language of the user's message or document. Follow this selected language instead.",
+      "Only include other-language text when directly quoting source text or when the user explicitly requests a translation.",
+    ].join(" ");
+  }
+
+  if (selectedLanguage === "hinglish") {
+    return [
+      "The user's selected response language is Hinglish. Write Hindi in the Roman alphabet and use English terms naturally.",
+      "Keep all explanations and follow-up questions in natural Hinglish; do not switch to Devanagari Hindi or English-only replies.",
+      "Do not mirror a different language used in the user's message or document.",
+      "Only include other-language text when directly quoting source text or when the user explicitly requests a translation.",
+    ].join(" ");
+  }
+
+  return [
+    `The user's selected response language is ${outputLanguage}. This is a strict requirement for every response.`,
+    `Write all explanations, greetings, headings, and follow-up questions in ${outputLanguage} only.`,
+    "Do not switch languages or mix in the language of the user's message or document.",
+    "Only include other-language text when directly quoting source text or when the user explicitly requests a translation.",
+  ].join(" ");
+};
+
 const buildChatPrompt = ({ context, message, language, focusMode, replyType }) => {
-  const outputLanguage = LANGUAGE_NAMES[String(language || "english").toLowerCase()] || "English";
+  const outputLanguage = getOutputLanguage(language);
   const responseStyle = REPLY_INSTRUCTIONS[String(replyType || "concise").toLowerCase()] || REPLY_INSTRUCTIONS.concise;
   const modeInstructions = focusMode
     ? [
@@ -38,8 +72,10 @@ const buildChatPrompt = ({ context, message, language, focusMode, replyType }) =
 
   return `You are DocuMind, a reliable document-aware AI assistant.
 
+SELECTED RESPONSE LANGUAGE:
+${buildLanguageInstruction(language)}
+
 GOAL AND ACCURACY:
-- Answer in ${outputLanguage}. For Hinglish, use natural Hindi in Roman script and retain English terms where they sound natural.
 - First identify what the user is asking for, then answer that request; do not answer a different or broader question.
 - When the question is about the provided document, use relevant DOCUMENT CONTEXT as evidence. It may contain only partial excerpts, so do not imply you reviewed material that is not present.
 - If the context does not support a document-specific answer, say that the provided excerpts do not establish it. Do not fill gaps with guesses.
@@ -65,7 +101,7 @@ ${context || "No document excerpts were retrieved."}
 ${message}
 </USER_QUESTION>
 
-Write a useful, accurate answer now.`;
+Write a useful, accurate answer now. Follow the selected response language strictly: ${outputLanguage}.`;
 };
 
-module.exports = { buildChatPrompt };
+module.exports = { buildChatPrompt, buildLanguageInstruction };

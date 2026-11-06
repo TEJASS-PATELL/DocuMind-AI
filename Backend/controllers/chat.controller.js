@@ -3,8 +3,9 @@ const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
 const fs = require("fs");
 const { getPineconeIndex } = require("../config/pinecone");
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
+const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
 const { OfficeParser } = require("officeparser");
-const { buildChatPrompt } = require("../utils/prompt");
+const { buildChatPrompt, buildLanguageInstruction } = require("../utils/prompt");
 
 const EMBEDDING_MODEL = "gemini-embedding-001";
 const EMBEDDING_DIM = 1024;
@@ -322,7 +323,10 @@ exports.askQuestion = async (req, res) => {
         req.body.focusMode === "true",
       replyType: req.body.replyType,
     });
-    const result = await model.invoke(prompt);
+    const result = await model.invoke([
+      new SystemMessage(buildLanguageInstruction(language)),
+      new HumanMessage(prompt),
+    ]);
     return res.json({ reply: result.content });
   } catch (error) {
     console.error("Chat Error:", error);
