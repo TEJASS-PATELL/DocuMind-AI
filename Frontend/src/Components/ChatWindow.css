@@ -6,6 +6,7 @@
   min-width: 0;
   min-height: 0;
   width: 100%;
+  overflow: hidden;
 }
 
 .chat-window {
@@ -18,7 +19,7 @@
   width: 100%;
   background: #ffffff;
   font-family: 'DM Sans', sans-serif;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
 }
 
