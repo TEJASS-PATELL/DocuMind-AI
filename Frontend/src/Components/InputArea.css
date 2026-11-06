@@ -208,7 +208,7 @@
   transform: translateY(-1px) scale(1.04);
 }
 
-@media (max-width: 540px) {
+@media (max-width: 540px), (pointer: coarse) {
   .input-area {
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     max-width: 100%;

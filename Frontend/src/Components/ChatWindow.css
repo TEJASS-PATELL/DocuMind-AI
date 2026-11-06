@@ -420,7 +420,7 @@
   }
 }
 
-@media (max-width: 540px) {
+@media (max-width: 540px), (pointer: coarse) {
   .scroll-to-bottom {
     left: auto;
     right: 16px;

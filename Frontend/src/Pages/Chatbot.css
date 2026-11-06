@@ -282,7 +282,7 @@ body,
   }
 }
 
-@media (max-width: 540px) {
+@media (max-width: 540px), (pointer: coarse) {
   .container {
     min-height: 0;
   }
