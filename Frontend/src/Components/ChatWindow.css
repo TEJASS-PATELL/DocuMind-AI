@@ -1,13 +1,66 @@
-.chat-window {
-  flex: 1;
+.chat-window-shell {
+  position: relative;
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  width: 100%;
+}
+
+.chat-window {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
   overscroll-behavior-y: contain;
+  touch-action: pan-y;
   width: 100%;
   background: #ffffff;
   font-family: 'DM Sans', sans-serif;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+}
+
+.scroll-to-bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #111111;
+  cursor: pointer;
+  z-index: 5;
+  transform: translateX(-50%);
+  animation: scrollButtonIn 0.2s ease-out both;
+  transition: transform 0.2s ease;
+}
+
+.scroll-to-bottom:hover {
+  transform: translate(-50%, -2px);
+}
+
+.scroll-to-bottom:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 3px;
+}
+
+@keyframes scrollButtonIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
 }
 
 .chat-window::-webkit-scrollbar {
@@ -367,6 +420,13 @@
 }
 
 @media (max-width: 540px) {
+  .scroll-to-bottom {
+    left: 50%;
+    bottom: 12px;
+    width: 48px;
+    height: 48px;
+  }
+
   .chat-window-inner {
     padding: 14px 12px 10px;
     gap: 14px;

@@ -7,6 +7,7 @@ import HomePage from './Pages/Home';
 import Login from './Pages/Login';
 import Signup from './Pages/Signup';
 import ProtectedRoute from './security/ProtectedRoute';
+import PublicOnlyRoute from './security/PublicOnlyRoute';
 import Loader from './Components/Loader';
 
 const LazyChatbot = React.lazy(() => import('./Pages/Chatbot'));
@@ -17,8 +18,13 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: '/login', element: <Login /> },
-      { path: '/signup', element: <Signup /> },
+      {
+        element: <PublicOnlyRoute />,
+        children: [
+          { path: '/login', element: <Login /> },
+          { path: '/signup', element: <Signup /> },
+        ],
+      },
       {
         path: '/chatbot',
         element: <ProtectedRoute />,

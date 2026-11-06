@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import ChatWindow from "../Components/ChatWindow";
 import InputArea from "../Components/InputArea";
 import { Settings, LogOut, X, MessageSquarePlus, SlidersHorizontal } from "lucide-react";
+import { FaHouse } from "react-icons/fa6";
 import toast from "react-hot-toast";
 
 interface Message {
@@ -257,6 +258,20 @@ const Chatbot: React.FC = () => {
 
               <button
                 className="menu-item"
+                title="Home"
+                aria-label="Go to home page"
+                onClick={() => {
+                  navigate("/", { replace: true });
+                  setIsMenuOpen(false);
+                }}
+              >
+                <FaHouse size={18} />
+              </button>
+
+              <div className="menu-divider-h" />
+
+              <button
+                className="menu-item"
                 title="Settings"
                 onClick={() => {
                   setShowSettingsModal(true);
@@ -315,10 +330,10 @@ const Chatbot: React.FC = () => {
                       <circle cx="0" cy="0" r="16" fill="#FFFFFF" />
                     </g>
                   </svg>
-                  <span>Ready to analyze your docs, <strong>{username}</strong>?</span>
+                  <span>Meet DocuDost, your document sidekick, <strong>{username}</strong>!</span>
                 </h1>
                 <p className="empty-subtitle">
-                  Upload a document and ask me anything — I'll read it and find the best answers for you.
+                  Upload a document and ask away. I'll do the reading — your coffee can supervise.
                 </p>
 
                 <InputArea
