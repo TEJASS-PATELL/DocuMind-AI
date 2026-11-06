@@ -14,7 +14,6 @@ const EMBEDDING_DIM = 1024;
 const processingSessions = new Set();
 const IMAGE_EXTENSIONS = new Set([
   ".avif",
-  ".bmp",
   ".gif",
   ".jpeg",
   ".jpg",
@@ -44,7 +43,8 @@ const EXTENSION_TO_FILETYPE = {
   ".csv": "csv",
 };
 
-const isImageFile = (fileName) =>
+const isImageFile = (fileName, mimeType) =>
+  mimeType?.startsWith("image/") ||
   IMAGE_EXTENSIONS.has(path.extname(fileName || "").toLowerCase());
 
 const extractTextFromImage = async (apiKey, buffer) => {
@@ -266,7 +266,7 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const fileBuffer = fs.readFileSync(req.file.path);
-    const extractedText = isImageFile(req.file.originalname)
+    const extractedText = isImageFile(req.file.originalname, req.file.mimetype)
       ? await extractTextFromImage(apiKey, fileBuffer)
       : await extractTextFromFile(fileBuffer, req.file.originalname);
 
