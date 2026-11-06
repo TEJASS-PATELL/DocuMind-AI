@@ -5,11 +5,25 @@ const { getPineconeIndex } = require("../config/pinecone");
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
 const { OfficeParser } = require("officeparser");
+const sharp = require("sharp");
 const { buildChatPrompt, buildLanguageInstruction } = require("../utils/prompt");
 
 const EMBEDDING_MODEL = "gemini-embedding-001";
+const IMAGE_MODEL = "gemini-3.5-flash-lite";
 const EMBEDDING_DIM = 1024;
 const processingSessions = new Set();
+const IMAGE_EXTENSIONS = new Set([
+  ".avif",
+  ".bmp",
+  ".gif",
+  ".jpeg",
+  ".jpg",
+  ".png",
+  ".svg",
+  ".tif",
+  ".tiff",
+  ".webp",
+]);
 
 const getNamespace = (user, sessionId) => {
   const session = String(sessionId || "default-session");
@@ -28,6 +42,62 @@ const EXTENSION_TO_FILETYPE = {
   ".md": "md",
   ".html": "html",
   ".csv": "csv",
+};
+
+const isImageFile = (fileName) =>
+  IMAGE_EXTENSIONS.has(path.extname(fileName || "").toLowerCase());
+
+const extractTextFromImage = async (apiKey, buffer) => {
+  const pngBuffer = await sharp(buffer, {
+    density: 144,
+    limitInputPixels: 40000000,
+  })
+    .png()
+    .toBuffer();
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: "Describe this image accurately for document search. Transcribe all visible text, including labels and numbers, then summarize the objects, scene, layout, and any important visual details. Do not guess text that is not legible.",
+              },
+              {
+                inlineData: {
+                  mimeType: "image/png",
+                  data: pngBuffer.toString("base64"),
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Image analysis API error (status ${response.status}): ${errorText}`
+    );
+  }
+
+  const data = await response.json();
+  const text = (data.candidates?.[0]?.content?.parts || [])
+    .map((part) => part.text || "")
+    .join("\n")
+    .trim();
+
+  if (!text) {
+    throw new Error("No text or description could be extracted from the image.");
+  }
+
+  return text;
 };
 
 const extractTextFromFile = async (buffer, originalName) => {
@@ -196,7 +266,9 @@ exports.uploadDocument = async (req, res) => {
     }
 
     const fileBuffer = fs.readFileSync(req.file.path);
-    const extractedText = await extractTextFromFile(fileBuffer, req.file.originalname);
+    const extractedText = isImageFile(req.file.originalname)
+      ? await extractTextFromImage(apiKey, fileBuffer)
+      : await extractTextFromFile(fileBuffer, req.file.originalname);
 
     if (!extractedText || extractedText.trim().length === 0) {
       throw new Error("File was parsed but no text was found.");

@@ -111,7 +111,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                     type="file"
                     ref={fileInputRef}
                     onChange={onFileChange}
-                    accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.png,.jpg,.jpeg"
+                    accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.png,.jpg,.jpeg,.svg,.webp,.gif,.bmp,.tif,.tiff,.avif"
                     multiple
                     style={{ display: 'none' }}
                 />
