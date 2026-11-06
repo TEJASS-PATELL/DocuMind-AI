@@ -80,6 +80,7 @@ const readSavedSettings = (): Partial<ChatSettings> => {
 
 const Chatbot: React.FC = () => {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [chatState, setChatState] = useState<ChatState>(
@@ -110,6 +111,34 @@ const Chatbot: React.FC = () => {
   const isReadyToChat = useMemo(() => userId !== null || isGuest, [userId, isGuest]);
   const username = isGuest || userId === null ? "Guest" : localStorage.getItem("username") || "Guest";
   const isEmptyState = messages.length === 0 && !displayedText;
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const viewport = window.visualViewport;
+    const updateViewport = () => {
+      container.style.setProperty(
+        "--chat-viewport-height",
+        `${viewport?.height ?? window.innerHeight}px`
+      );
+      container.style.setProperty(
+        "--chat-viewport-top",
+        `${viewport?.offsetTop ?? 0}px`
+      );
+    };
+
+    updateViewport();
+    viewport?.addEventListener("resize", updateViewport);
+    viewport?.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", updateViewport);
+
+    return () => {
+      viewport?.removeEventListener("resize", updateViewport);
+      viewport?.removeEventListener("scroll", updateViewport);
+      window.removeEventListener("resize", updateViewport);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -241,7 +270,7 @@ const Chatbot: React.FC = () => {
   };
 
   return (
-    <div className="container">
+    <div className="container" ref={containerRef}>
       <div className="main-box">
         <div className="chat-box">
           <div className="top-menu-wrapper">

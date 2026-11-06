@@ -55,7 +55,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
 
   const stopProgrammaticScroll = useCallback(() => {
     const chatWindow = chatWindowRef.current;
-    if (chatWindow) {
+    if (chatWindow && isProgrammaticScrollRef.current) {
       chatWindow.scrollTo({ top: chatWindow.scrollTop, behavior: 'auto' });
     }
 
@@ -71,9 +71,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
   }, []);
 
   const pauseAutoFollow = useCallback(() => {
-    stopProgrammaticScroll();
+    if (autoScrollTimerRef.current !== null) {
+      window.clearTimeout(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
     shouldFollowLatestRef.current = false;
-  }, [stopProgrammaticScroll]);
+  }, []);
+
+  const stopFollowingDuringManualScroll = useCallback(() => {
+    stopProgrammaticScroll();
+    pauseAutoFollow();
+  }, [pauseAutoFollow, stopProgrammaticScroll]);
 
   const scrollToLatest = useCallback(() => {
     const chatWindow = chatWindowRef.current;
@@ -122,8 +130,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, displayedText, isLoad
             shouldFollowLatestRef.current = distanceFromBottom < 48;
           }
         }}
-        onWheel={pauseAutoFollow}
-        onTouchMove={pauseAutoFollow}
+        onWheel={stopFollowingDuringManualScroll}
+        onTouchStart={stopFollowingDuringManualScroll}
         onPointerDown={stopProgrammaticScroll}
       >
         <div className="chat-window-inner">

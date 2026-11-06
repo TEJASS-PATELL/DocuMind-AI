@@ -9,14 +9,17 @@ body,
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  position: fixed;
+  top: var(--chat-viewport-top, 0px);
+  right: 0;
+  left: 0;
+  height: var(--chat-viewport-height, 100vh);
+  height: var(--chat-viewport-height, 100dvh);
   width: 100%;
   min-width: 0;
   min-height: 0;
   background-color: white;
   overflow: hidden;
-  position: relative;
   font-family: 'DM Sans', sans-serif;
 }
 
@@ -324,11 +327,20 @@ body,
   }
 
   .empty-state {
+    align-items: stretch;
+    justify-content: flex-start;
     padding: 20px 12px;
   }
 
   .empty-state-inner {
+    flex: 1;
+    min-height: 0;
+    justify-content: flex-start;
     gap: 14px;
+  }
+
+  .empty-state .input-area {
+    margin-top: auto;
   }
 }
 
