@@ -422,14 +422,23 @@
 
 @media (max-width: 540px) {
   .scroll-to-bottom {
-    left: 50%;
+    left: auto;
+    right: 16px;
     bottom: 12px;
     width: 48px;
     height: 48px;
+    background: #ffffff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+    transform: none;
+    animation: scrollButtonInMobile 0.2s ease-out both;
+  }
+
+  .scroll-to-bottom:hover {
+    transform: translateY(-2px);
   }
 
   .chat-window-inner {
-    padding: 14px 12px 10px;
+    padding: 14px 12px 64px;
     gap: 14px;
   }
 
@@ -461,6 +470,18 @@
   .msg-row--model .msg-bubble th,
   .msg-row--model .msg-bubble td {
     padding: 8px 10px;
+  }
+}
+
+@keyframes scrollButtonInMobile {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
