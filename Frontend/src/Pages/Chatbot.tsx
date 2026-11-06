@@ -294,7 +294,7 @@ const Chatbot: React.FC = () => {
           {isEmptyState ? (
             <div className="empty-state">
               <div className="empty-state-inner">
-                <h1 className="empty-greeting" style={{ display: 'flex', alignItems: 'center', gap: '2px', marginLeft: '-60px' }}>
+                <h1 className="empty-greeting">
                   <svg
                     onClick={() => navigate("/")}
                     viewBox="0 0 512 512"
@@ -302,7 +302,6 @@ const Chatbot: React.FC = () => {
                     width="50"
                     className="spin-icon"
                     height="50"
-                    style={{ flexShrink: 0 }}
                   >
                     <g transform="translate(256, 256)">
                       <path

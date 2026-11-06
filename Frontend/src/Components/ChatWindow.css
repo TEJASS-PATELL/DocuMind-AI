@@ -2,10 +2,12 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   width: 100%;
   background: #ffffff;
   font-family: 'DM Sans', sans-serif;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chat-window::-webkit-scrollbar {
@@ -77,6 +79,7 @@
   gap: 12px;
   margin-top: 10px;
   margin-bottom: 10px;
+  min-width: 0;
   animation: msgSlideUp 0.28s ease both;
 }
 
@@ -279,13 +282,13 @@
   display: block;
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   width: max-content;
   min-width: 100%;
   border-collapse: collapse;
   margin: 14px 0;
   font-size: 13.5px;
   border-radius: 8px;
-  overflow: hidden;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
@@ -371,10 +374,12 @@
 
   .msg-row {
     gap: 8px;
+    margin-top: 6px;
+    margin-bottom: 6px;
   }
 
   .msg-bubble {
-    max-width: 92%;
+    max-width: 100%;
     padding: 10px 12px;
     font-size: 14px;
   }
@@ -395,5 +400,17 @@
   .msg-row--model .msg-bubble th,
   .msg-row--model .msg-bubble td {
     padding: 8px 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .chat-window-inner {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .msg-bubble {
+    padding: 9px 10px;
+    font-size: 13.5px;
   }
 }
